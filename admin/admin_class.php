@@ -2,22 +2,25 @@
 session_start();
 ini_set('display_errors', 1);
 
-class Action {
+class Action
+{
     private $db;
 
-    public function __construct() {
+    public function __construct()
+    {
         ob_start();
         include 'db_connect.php';
         $this->db = $conn;
     }
 
-    function __destruct() {
+    function __destruct()
+    {
         $this->db->close();
         ob_end_flush();
     }
 
-    // Improved login with prepared statement to avoid SQL injection
-    function login() {
+    function login()
+    {
         extract($_POST);
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? AND password = ?");
         $stmt->bind_param("ss", $username, $password); // Bind parameters
@@ -36,7 +39,8 @@ class Action {
     }
 
     // Improved login2 with prepared statement
-    function login2() {
+    function login2()
+    {
         extract($_POST);
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? AND password = ?");
         $hashed_password = md5($password);
@@ -56,34 +60,90 @@ class Action {
     }
 
     // Improved logout method
-    function logout() {
+    function logout()
+    {
         session_destroy();
         $_SESSION = [];
         header("location: login.php");
     }
 
     // Improved logout2 method
-    function logout2() {
+    function logout2()
+    {
         session_destroy();
         $_SESSION = [];
         header("location: ../index.php");
     }
-
-    // Save or update user with prepared statements
-    function save_user() {
+    function save_user()
+    {
         extract($_POST);
-        $stmt = $this->db->prepare("INSERT INTO users (name, username, password, type) VALUES (?, ?, ?, ?)
-                                   ON DUPLICATE KEY UPDATE name = ?, username = ?, password = ?, type = ?");
-        $stmt->bind_param("ssssssss", $name, $username, $password, $type, $name, $username, $password, $type);
-        $stmt->execute();
-        if ($stmt->affected_rows > 0) {
-            return 1;
+        // Save or update user with prepared statements
+        if (empty($name) || empty($username)) {
+            return json_encode(['status' => 'error', 'message' => 'Name and username are required']);
         }
-        return 0;
+
+        // Check if user exists
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? " . (isset($id) ? "AND id != ?" : ""));
+        if (isset($id)) {
+            $stmt->bind_param("si", $username, $id);
+        } else {
+            $stmt->bind_param("s", $username);
+        }
+        $stmt->execute();
+        $check = $stmt->get_result();
+
+        if ($check->num_rows > 0) {
+            return json_encode(['status' => 'error', 'message' => 'Username already exists']);
+        }
+
+        // Prepare data
+        $data = [
+            'name' => $name,
+            'username' => $username,
+            'contact' => $contact ?? '',
+            'address' => $address ?? '',
+            'type' => $type ?? 3
+        ];
+
+        // Add password if provided
+        if (!empty($password)) {
+            $data['password'] = password_hash($password, PASSWORD_DEFAULT);
+        }
+
+        // Update or Insert logic
+        if (isset($id) && $id > 0) {
+            // Update existing user
+            $set = implode(', ', array_map(function ($k) {
+                return "$k = ?";
+            }, array_keys($data)));
+
+            $stmt = $this->db->prepare("UPDATE users SET $set WHERE id = ?");
+            $params = array_values($data);
+            $params[] = $id; // Add ID to the end of the parameters
+            $stmt->bind_param(str_repeat('s', count($data)) . 'i', ...$params);
+
+            if ($stmt->execute()) {
+                return json_encode(['status' => 'success', 'message' => 'User  updated successfully']);
+            }
+        } else {
+            // Insert new user
+            $keys = implode(', ', array_keys($data));
+            $placeholders = implode(', ', array_fill(0, count($data), '?'));
+            $stmt = $this->db->prepare("INSERT INTO users ($keys) VALUES ($placeholders)");
+
+            $stmt->bind_param(str_repeat('s', count($data)), ...array_values($data));
+            if ($stmt->execute()) {
+                return json_encode(['status' => 'success', 'message' => 'User  created successfully']);
+            }
+        }
+
+        // If query fails
+        return json_encode(['status' => 'error', 'message' => 'Failed to save user: ' . $this->db->error]);
     }
 
     // Improved user signup
-    function signup() {
+    function signup()
+    {
         extract($_POST);
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->bind_param("s", $email);
@@ -106,8 +166,8 @@ class Action {
         return 0;
     }
 
-    // Save system settings (with proper sanitization)
-    function save_settings() {
+    function save_settings()
+    {
         extract($_POST);
         $data = "name = '" . str_replace("'", "&#x2019;", $name) . "'";
         $data .= ", email = '$email'";
@@ -122,7 +182,6 @@ class Action {
             }
         }
 
-        // Check if settings exist and insert/update accordingly
         $stmt = $this->db->prepare("SELECT * FROM system_settings");
         $stmt->execute();
         $result = $stmt->get_result();
@@ -146,7 +205,8 @@ class Action {
     }
 
     // Save airline
-    function save_airlines() {
+    function save_airlines()
+    {
         extract($_POST);
         $data = "airlines = '$airlines'";
 
@@ -168,7 +228,8 @@ class Action {
     }
 
     // Delete airline
-    function delete_airlines() {
+    function delete_airlines()
+    {
         extract($_POST);
         $stmt = $this->db->prepare("DELETE FROM airlines_list WHERE id = ?");
         $stmt->bind_param("i", $id);
@@ -180,23 +241,23 @@ class Action {
         return 0;
     }
 
-    // Delete user (new method added)
-    function delete_user() {
+    function delete_user()
+    {
         if (isset($_POST['id'])) {
-            $id = $_POST['id']; // Get the ID of the user to delete
+            $id = $_POST['id']; 
             $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
-            $stmt->bind_param("i", $id); // Bind the ID parameter
+            $stmt->bind_param("i", $id); 
             $stmt->execute();
 
             if ($stmt->affected_rows > 0) {
-                return 1; // User successfully deleted
+                return json_encode(['status' => 'success', 'message' => 'User  successfully deleted']);
             }
         }
-        return 0; // Deletion failed or no ID provided
+        return json_encode(['status' => 'error', 'message' => 'Deletion failed or no ID provided']);
     }
-
     // Save airport
-    function save_airports() {
+    function save_airports()
+    {
         extract($_POST);
         $data = "airport = '$airport', location = '$location'";
 
@@ -210,7 +271,8 @@ class Action {
     }
 
     // Delete airport
-    function delete_airports() {
+    function delete_airports()
+    {
         extract($_POST);
         $stmt = $this->db->prepare("DELETE FROM airport_list WHERE id = ?");
         $stmt->bind_param("i", $id);
@@ -223,7 +285,8 @@ class Action {
     }
 
     // Save flight
-    function save_flight() {
+    function save_flight()
+    {
         extract($_POST);
         $data = "airline_id = '$airline', plane_no = '$plane_no', departure_airport_id = '$departure_airport_id',
                 arrival_airport_id = '$arrival_airport_id', departure_datetime = '$departure_datetime',
@@ -239,7 +302,8 @@ class Action {
     }
 
     // Delete flight
-    function delete_flight() {
+    function delete_flight()
+    {
         extract($_POST);
         $stmt = $this->db->prepare("DELETE FROM flight_list WHERE id = ?");
         $stmt->bind_param("i", $id);
@@ -252,7 +316,8 @@ class Action {
     }
 
     // Book flight
-    function book_flight() {
+    function book_flight()
+    {
         extract($_POST);
         foreach ($name as $k => $value) {
             $data = "flight_id = $flight_id, name = ?, address = ?, contact = ?";
@@ -268,7 +333,8 @@ class Action {
     }
 
     // Update booked flight
-    function update_booked() {
+    function update_booked()
+    {
         extract($_POST);
         $data = "name = ?, address = ?, contact = ?";
         $stmt = $this->db->prepare("UPDATE booked_flight SET $data WHERE id = ?");
@@ -281,4 +347,3 @@ class Action {
         return 0;
     }
 }
-?>

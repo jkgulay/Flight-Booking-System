@@ -1,175 +1,272 @@
-<?php include('db_connect.php');?>
+<?php include('db_connect.php'); ?>
 
-<div class="container-fluid">
-	
-	<div class="col-lg-12">
-		<div class="row">
-			<!-- FORM Panel -->
-			<div class="col-md-4">
-			<form action="" id="manage-airlines">
-				<div class="card">
-					<div class="card-header">
-						   Airlines Form
-				  	</div>
-					<div class="card-body">
-							<input type="hidden" name="id">
-							<div class="form-group">
-								<label class="control-label">Airlines</label>
-								<textarea name="airlines" id="" cols="30" rows="2" class="form-control"></textarea>
-							</div>
-							<div class="form-group">
-								<label for="" class="control-label">Logo</label>
-								<input type="file" class="form-control" name="img" onchange="displayImg(this,$(this))">
-							</div>
-							<div class="form-group">
-								<img src="" alt="" id="cimg">
-							</div>	
-							
-							
-					</div>
-							
-					<div class="card-footer">
-						<div class="row">
-							<div class="col-md-12">
-								<button class="btn btn-sm btn-primary col-sm-3 offset-md-3"> Save</button>
-								<button class="btn btn-sm btn-default col-sm-3" type="button" onclick="_reset()"> Cancel</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</form>
-			</div>
-			<!-- FORM Panel -->
+<div class="container-fluid pt-3">
+    <div class="row">
+        <!-- Form Panel -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-plane mr-2"></i>Airlines Management
+                    </h5>
+                </div>
+                <form action="" id="manage-airlines" enctype="multipart/form-data" autocomplete="off">
+                    <div class="card-body">
+                        <input type="hidden" name="id">
+                        <div class="form-group">
+                            <label class="control-label">
+                                <i class="fas fa-tag mr-2"></i>Airline Name
+                            </label>
+                            <input 
+                                type="text" 
+                                name="airlines" 
+                                class="form-control" 
+                                placeholder="Enter airline name"
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">
+                                <i class="fas fa-image mr-2"></i>Logo
+                            </label>
+                            <div class="custom-file">
+                                <input 
+                                    type="file" 
+                                    class="custom-file-input" 
+                                    name="img" 
+                                    id="logoInput" 
+                                    accept="image/*"
+                                >
+                                <label class="custom-file-label" for="logoInput">Choose file</label>
+                            </div>
+                        </div>
+                        <div class="form-group text-center">
+                            <img 
+                                src="" 
+                                alt="Airline Logo" 
+                                id="cimg" 
+                                class="img-fluid rounded shadow-sm" 
+                                style="max-height: 200px; display: none;"
+                            >
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-md-12 d-flex justify-content-between">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-save mr-2"></i>Save
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="_reset()">
+                                    <i class="fas fa-times mr-2"></i>Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-			<!-- Table Panel -->
-			<div class="col-md-8">
-				<div class="card">
-					<div class="card-body">
-						<table class="table table-bordered table-hover">
-							<thead>
-								<tr>
-									<th class="text-center">#</th>
-									<th class="text-center">Image</th>
-									<th class="text-center">Name</th>
-									<th class="text-center">Action</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php 
-								$i = 1;
-								$cats = $conn->query("SELECT * FROM airlines_list order by id asc");
-								while($row=$cats->fetch_assoc()):
-								?>
-								<tr>
-									<td class="text-center"><?php echo $i++ ?></td>
-									<td class="text-center">
-										<img src="../assets/img/<?php echo $row['logo_path'] ?>" alt="">
-									</td>
-									<td class="">
-										 <b><?php echo $row['airlines'] ?></b>
-									</td>
-									<td class="text-center">
-										<button class="btn btn-sm btn-primary edit_airline" type="button" data-id="<?php echo $row['id'] ?>" data-airlines="<?php echo $row['airlines'] ?>" data-logo_path="<?php echo $row['logo_path'] ?>" >Edit</button>
-										<button class="btn btn-sm btn-danger delete_airline" type="button" data-id="<?php echo $row['id'] ?>">Delete</button>
-									</td>
-								</tr>
-								<?php endwhile; ?>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-			<!-- Table Panel -->
-		</div>
-	</div>	
-
+        <!-- Table Panel -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list mr-2"></i>Airlines List
+                    </h5>
+                    <div class="card-tools">
+                        <button class="btn btn-success btn-sm" id="refresh-table">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="airlinesTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th class="text-center">#</th>
+                                    <th>Logo</th>
+                                    <th>Airline Name</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php 
+                                $i = 1;
+                                $airlines = $conn->query("SELECT * FROM airlines_list ORDER BY id ASC");
+                                while($row = $airlines->fetch_assoc()):
+                                ?>
+                                <tr>
+                                    <td class="text-center"><?php echo $i++ ?></td>
+                                    <td class="text-center">
+                                        <img 
+                                            src="../assets/img/<?php echo htmlspecialchars($row['logo_path']); ?>" 
+                                            alt="<?php echo htmlspecialchars($row['airlines']); ?>" 
+                                            class="img-thumbnail" 
+                                            style="max-width: 100px; max-height: 100px;"
+                                        >
+                                    </td>
+                                    <td><?php echo htmlspecialchars($row['airlines']); ?></td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <button 
+                                                class="btn btn-sm btn-warning edit_airline" 
+                                                data-id="<?php echo $row['id'] ?>" 
+                                                data-airlines="<?php echo htmlspecialchars($row['airlines']) ?>" 
+                                                data-logo_path="<?php echo htmlspecialchars($row['logo_path']) ?>"
+                                                title="Edit"
+                                            >
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button 
+                                                class="btn btn-sm btn-danger delete_airline" 
+                                                data-id="<?php echo $row['id'] ?>"
+                                                title="Delete"
+                                            >
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 <style>
-	
-	td{
-		vertical-align: middle !important;
-	}
-	td p{
-		margin: unset
-	}
-	img{
-		max-width:100px;
-		max-height: :150px;
-	}
-</style>
-<script>
-	function _reset(){
-		$('#cimg').attr('src','');
-		$('[name="id"]').val('');
-		$('#manage-airlines').get(0).reset();
-	}
-	
-	$('#manage-airlines').submit(function(e){
-		e.preventDefault()
-		start_load()
-		$.ajax({
-			url:'ajax.php?action=save_airlines',
-			data: new FormData($(this)[0]),
-		    cache: false,
-		    contentType: false,
-		    processData: false,
-		    method: 'POST',
-		    type: 'POST',
-			success:function(resp){
-				if(resp==1){
-					alert_toast("Data successfully added",'success')
-					setTimeout(function(){
-						location.reload()
-					},1500)
-
-				}
-				else if(resp==2){
-					alert_toast("Data successfully updated",'success')
-					setTimeout(function(){
-						location.reload()
-					},1500)
-
-				}
-			}
-		})
-	})
-	$('.edit_airline').click(function(){
-		start_load()
-		var cat = $('#manage-airlines')
-		cat.get(0).reset()
-		cat.find("[name='id']").val($(this).attr('data-id'))
-		cat.find("[name='airlines']").val($(this).attr('data-airlines'))
-		cat.find("#cimg").attr("src","../assets/img/"+$(this).attr('data-logo_path'))
-		end_load()
-	})
-	$('.delete_airline').click(function(){
-		_conf("Are you sure to delete this airline?","delete_airline",[$(this).attr('data-id')])
-	})
-	function displayImg(input,_this) {
-    if (input.files && input.files[0]) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-        	$('#cimg').attr('src', e.target.result);
-        }
-
-        reader.readAsDataURL(input.files[0]);
+    body {
+        background-color: #f4f6f9;
     }
-}
-	function delete_airline($id){
-		start_load()
-		$.ajax({
-			url:'ajax.php?action=delete_airlines',
-			method:'POST',
-			data:{id:$id},
-			success:function(resp){
-				if(resp==1){
-					alert_toast("Data successfully deleted",'success')
-					setTimeout(function(){
-						location.reload()
-					},1500)
+    .card {
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .card-header {
+        padding: 15px;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+		background-color: #213555;
+    }
+    .table td, .table th {
+        vertical-align: middle !important;
+        padding: 12px;
+    }
+</style>
 
-				}
-			}
-		})
-	}
+<script>
+$(document).ready(function() {
+    // DataTable initialization
+    $('#airlinesTable').DataTable({
+        responsive: true,
+        language: {
+            searchPlaceholder: "Search airlines...",
+            lengthMenu: "Show _MENU_ entries"
+        },
+        columnDefs: [{
+            targets: [-1],
+            orderable: false
+        }]
+    });
+
+    // Custom file input label
+    $(".custom-file-input").on("change", function() {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        
+        // Display image preview
+        displayImg(this);
+    });
+
+    // Reset form function
+    function _reset() {
+        $('#manage-airlines')[0].reset();
+        $('[name="id"]').val('');
+        $('#cimg').attr('src', '').hide();
+        $('.custom-file-label').html('Choose file');
+    }
+
+    // Image display function
+    function displayImg(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $('#cimg').attr('src', e.target.result).show();
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Form submission
+    $('#manage-airlines').on('submit', function(e) {
+        e.preventDefault();
+         start_load();
+        $.ajax({
+            url: 'ajax.php?action=save_airlines',
+            data: new FormData(this),
+            cache: false,
+            contentType: false,
+            processData: false,
+            method: 'POST',
+            success: function(resp) {
+                if (resp == 1) {
+                    alert_toast("Data successfully added", 'success');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else if (resp == 2) {
+                    alert_toast("Data successfully updated", 'success');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                }
+            },
+            error: function() {
+                alert_toast("An error occurred while processing your request.", 'error');
+            }
+        });
+        end_load();
+    });
+
+    // Edit airline
+    $('.edit_airline').click(function() {
+        start_load();
+        var cat = $('#manage-airlines');
+        cat.get(0).reset();
+        cat.find("[name='id']").val($(this).data('id'));
+        cat.find("[name='airlines']").val($(this).data('airlines'));
+        $('#cimg').attr("src", "../assets/img/" + $(this).data('logo_path')).show();
+        end_load();
+    });
+
+    // Delete airline
+    $('.delete_airline').click(function() {
+        _conf("Are you sure to delete this airline?", "delete_airline", [$(this).data('id')]);
+    });
+});
+
+// Delete airline function
+function delete_airline(id) {
+    start_load();
+    $.ajax({
+        url: 'ajax.php?action=delete_airlines',
+        method: 'POST',
+        data: { id: id },
+        success: function(resp) {
+            if (resp == 1) {
+                alert_toast("Data successfully deleted", 'success');
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            }
+        },
+        error: function() {
+            alert_toast("An error occurred while deleting the airline.", 'error');
+        }
+    });
+    end_load();
+}
 </script>

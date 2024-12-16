@@ -1,29 +1,44 @@
 <style>
-	.logo {
-    margin: auto;
-    font-size: 20px;
-    background: white;
-    padding: 7px 11px;
-    border-radius: 50% 50%;
-    color: #000000b3;
+  .logo {
+    margin: 0; 
+    padding: 0; 
+    display: flex; 
+    align-items: center; 
+  }
+
+  .navbar {
+    padding: 0.5rem 1rem; 
+    background-color: #213555; 
+  }
+
+  .navbar .navbar-brand {
+    font-size: 1.5rem; 
+    font-weight: bold; 
+    color: #D8C4B6; 
 }
+
+  .logout-link {
+    color: white; 
+    text-decoration: none; 
+  }
+
+  .logout-link:hover {
+    text-decoration: underline; 
+  }
 </style>
 
-<nav class="navbar navbar-light fixed-top bg-primary" style="padding:0;">
-  <div class="container-fluid mt-2 mb-2">
-  	<div class="col-lg-12">
-  		<div class="col-md-1 float-left" style="display: flex;">
-  			<div class="logo">
-  				<span class="fa fa-plane-departure"></span>
-  			</div>
-  		</div>
-      <div class="col-md-4 float-left text-white">
-        <large><b>Flight Booking System</b></large>
+<nav class="navbar navbar-light fixed-top">
+  <div class="container-fluid">
+    <div class="d-flex align-items-center">
+      <div class="logo me-2">
+        <img src="assets/img/bgg.png" alt="logo" class="img-fluid" style="max-width: 50px; height: auto;">
       </div>
-	  	<div class="col-md-2 float-right text-white">
-	  		<a href="ajax.php?action=logout" class="text-white"><?php echo $_SESSION['login_name'] ?> <i class="fa fa-power-off"></i></a>
-	    </div>
+      <div class="navbar-brand">Flight Booking System</div>
+    </div>
+    <div class="ml-auto">
+      <a href="ajax.php?action=logout" class="logout-link">
+        <?php echo htmlspecialchars($_SESSION['login_name']); ?> <i class=" fa fa-power-off"></i>
+      </a>
     </div>
   </div>
-  
 </nav>

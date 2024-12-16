@@ -1,102 +1,73 @@
 <?php
 ob_start();
-$action = $_GET['action'];
+header('Content-Type: application/json');
+
 include 'admin_class.php';
 $crud = new Action();
 
-if($action == 'login'){
-	$login = $crud->login();
-	if($login)
-		echo $login;
+function sendJsonResponse($status, $message, $data = null) {
+    $response = [
+        'status' => $status,
+        'message' => $message
+    ];
+    
+    if ($data !== null) {
+        $response['data'] = $data;
+    }
+    
+    echo json_encode($response);
+    exit;
 }
-if($action == 'login2'){
-	$login = $crud->login2();
-	if($login)
-		echo $login;
+
+try {
+    if (!isset($_GET['action'])) {
+        sendJsonResponse('error', 'No action specified');
+    }
+
+    $action = $_GET['action'];
+
+    $actionMap = [
+        'login' => 'login',
+        'login2' => 'login2',
+        'logout' => 'logout',
+        'logout2' => 'logout2',
+        'save_user' => 'save_user',
+        'delete_user' => 'delete_user',
+        'signup' => 'signup',
+        'save_settings' => 'save_settings',
+        'save_airlines' => 'save_airlines',
+        'delete_airlines' => 'delete_airlines',
+        'save_airports' => 'save_airports',
+        'delete_airports' => 'delete_airports',
+        'save_flight' => 'save_flight',
+        'delete_flight' => 'delete_flight',
+        'book_flight' => 'book_flight',
+        'update_booked' => 'update_booked'
+    ];
+
+    if (!array_key_exists($action, $actionMap)) {
+        sendJsonResponse('error', 'Invalid action');
+    }
+
+    $methodName = $actionMap[$action];
+    $result = $crud->$methodName();
+
+    if ($result === false) {
+        sendJsonResponse('error', 'Operation failed');
+    } elseif (is_string($result)) {
+        $parsedResult = json_decode($result, true);
+        
+        if (json_last_error() === JSON_ERROR_NONE) {
+            echo $result;
+        } else {
+            sendJsonResponse('success', $result);
+        }
+    } else {
+        sendJsonResponse('success', 'Operation completed', $result);
+    }
+
+} catch (Exception $e) {
+    sendJsonResponse('error', 'An unexpected error occurred: ' . $e->getMessage());
 }
-if($action == 'logout'){
-	$logout = $crud->logout();
-	if($logout)
-		echo $logout;
-}
-if($action == 'logout2'){
-	$logout = $crud->logout2();
-	if($logout)
-		echo $logout;
-}
-if($action == 'save_user'){
-	$save = $crud->save_user();
-	if($save)
-		echo $save;
-}
-if($action == 'delete_user'){
-	// Handle delete user action
-	$save = $crud->delete_user();
-	if($save)
-		echo $save;
-}
-if($action == 'signup'){
-	$save = $crud->signup();
-	if($save)
-		echo $save;
-}
-if($action == "save_settings"){
-	$save = $crud->save_settings();
-	if($save)
-		echo $save;
-}
-if($action == "save_airlines"){
-	$save = $crud->save_airlines();
-	if($save)
-		echo $save;
-}
-if($action == "delete_airlines"){
-	$save = $crud->delete_airlines();
-	if($save)
-		echo $save;
-}
-if($action == "save_airports"){
-	$save = $crud->save_airports();
-	if($save)
-		echo $save;
-}
-if($action == "delete_airports"){
-	$save = $crud->delete_airports();
-	if($save)
-		echo $save;
-}
-if($action == "save_flight"){
-	$save = $crud->save_flight();
-	if($save)
-		echo $save;
-}
-if($action == "delete_flight"){
-	$save = $crud->delete_flight();
-	if($save)
-		echo $save;
-}
-if($action == "set_appointment"){
-	$save = $crud->set_appointment();
-	if($save)
-		echo $save;
-}
-if($action == "delete_appointment"){
-	$save = $crud->delete_appointment();
-	if($save)
-		echo $save;
-}
-if($action == "update_appointment"){
-	$save = $crud->update_appointment();
-	if($save)
-		echo $save;
-}
-if($action == "book_flight"){
-	$save = $crud->book_flight();
-	if($save)
-		echo $save;
-}
-if($action == "update_booked"){
-	$save = $crud->update_booked();
-	if($save)
-		echo $save;
-}
+
+ob_end_flush();

@@ -1,6 +1,6 @@
 <?php include 'db_connect.php'; ?>
 
-<div class="container-fluid">
+<div class="container-fluid pt-3">
     <div class="col-lg-12">
         <div class="card">
             <div class="card-header">

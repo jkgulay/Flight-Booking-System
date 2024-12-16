@@ -47,3 +47,39 @@
 
 
 })(jQuery); // End of use strict
+
+// Loading indicator start
+function start_load() {
+  $('body').prepend('<div class="loader-container"><div class="loader"></div></div>');
+}
+
+// Loading indicator end
+function end_load() {
+  $('.loader-container').remove();
+}
+
+// Confirmation dialog
+function _conf(msg, func, params = []) {
+  Swal.fire({
+      title: 'Are you sure?',
+      text: msg,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, proceed!'
+  }).then((result) => {
+      if (result.isConfirmed) {
+          // Call the function with provided parameters
+          window[func](...params);
+      }
+  });
+}
+
+// Modal function 
+function uni_modal(title, url, size = 'modal-lg') {
+  // Assuming you're using Bootstrap modal
+  $('#uni_modal .modal-title').text(title);
+  $('#uni_modal .modal-body').load(url);
+  $('#uni_modal').modal('show');
+}

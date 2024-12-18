@@ -117,7 +117,7 @@ $users = $conn->query("
                                 <td class="text-center"><?php echo $i++ ?></td>
                                 <td>
                                     <div class="d-flex align-items-center">
-
+                  
                                         <?php echo htmlspecialchars($row['name']) ?>
                                     </div>
                                 </td>
@@ -174,239 +174,231 @@ $users = $conn->query("
 </div>
 
 <script>
-    (function($) {
-        // Ensure jQuery is loaded
-        if (typeof $ === 'undefined') {
-            console.error('jQuery is not loaded');
-            return;
-        }
+(function($) {
+    // Ensure jQuery is loaded
+    if (typeof $ === 'undefined') {
+        console.error('jQuery is not loaded');
+        return;
+    }
 
-        // DataTable initialization
-        function initializeDataTable() {
-            return $('#userTable').DataTable({
-                responsive: true,
-                processing: true,
-                language: {
-                    searchPlaceholder: "Search users...",
-                    lengthMenu: "Show _MENU_ entries",
-                    processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
-                },
-                columnDefs: [{
-                    targets: [-1],
-                    orderable: false
-                }]
-            });
-        }
+    // DataTable initialization
+    function initializeDataTable() {
+        return $('#userTable').DataTable({
+            responsive: true,
+            processing: true,
+            language: {
+                searchPlaceholder: "Search users...",
+                lengthMenu: "Show _MENU_ entries",
+                processing: '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>'
+            },
+            columnDefs: [{
+                targets: [-1],
+                orderable: false
+            }]
+        });
+    }
 
-        // Export users functionality
-        function setupExportUsers() {
-            $('#export_users').on('click', function() {
-                window.location.href = '?action=export_users';
-            });
-        }
+    // Export users functionality
+    function setupExportUsers() {
+        $('#export_users').on('click', function() {
+            window.location.href = '?action=export_users';
+        });
+    }
 
-        function setupUserManagement() {
-            // Add new user modal
-            $('#new_user').on('click', function() {
-                uni_modal('Add New User', 'manage_user.php', 'modal-lg');
-            });
-
-            // Edit user modal
-            $(document).on('click', '.edit_user', function() {
-                uni_modal('Edit User', 'manage_user.php?id=' + $(this).data('id'), 'modal-lg');
-            });
-
-            // View user details modal
-            $(document).on('click', '.view_user', function() {
-                uni_modal('User  Details', 'view_user.php?id=' + $(this).data('id'), 'modal-lg');
-            });
-
-            // Delete user confirmation
-            $(document).on('click', '.delete_user', function() {
-                const userId = $(this).data('id');
-                _conf("Are you sure you want to delete this user?", deleteUser, [userId]);
-            });
-        }
-
-        // Delete user function
-        function deleteUser(id) {
-            // Start loading
-            start_load();
-
-            $.ajax({
-                url: 'ajax.php?action=delete_user',
-                method: 'POST',
-                dataType: 'json',
-                data: {
-                    id: id
-                },
-                success: function(response) {
-                    // Stop loading
-                    end_load();
-
-                    if (response.status === 'success') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Deleted!',
-                            text: response.message
-                        }).then(() => {
-                            // Reload the page or remove the row
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: response.message
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    // Stop loading
-                    end_load();
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Something went wrong: ' + error
-                    });
-                }
-            });
-        }
-
-        // Save user function
-        function saveUser() {
-            // Start loading
-            start_load();
-
-            // Serialize form data
-            const formData = $('#manage-user').serialize();
-
-            $.ajax({
-                url: 'ajax.php?action=save_user',
-                method: 'POST',
-                dataType: 'json',
-                data: formData,
-                success: function(response) {
-                    // Stop loading
-                    end_load();
-
-                    if (response.status === 'success') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: response.message
-                        }).then(() => {
-                            // Close modal and reload page
-                            $('#uni_modal').modal('hide');
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: response.message
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    // Stop loading
-                    end_load();
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'An unexpected error occurred: ' + error
-                    });
-                }
-            });
-        }
-
-        // Loading indicator start
-        function start_load() {
-            $('body').prepend('<div class="loader-container"><div class="loader"></div></div>');
-        }
-
-        // Loading indicator end
-        function end_load() {
-            $('.loader-container').remove();
-        }
-
-        // Confirmation dialog
-        function _conf(msg, func, params = []) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: msg,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, proceed!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Call the function with provided parameters
-                    func(...params);
-                }
-            });
-        }
-
-        // Modal function
-        function uni_modal(title, url, size = 'modal-lg') {
-            $('#uni_modal .modal-title').text(title);
-            $('#uni_modal .modal-body').load(url);
-            $('#uni_modal').modal('show');
-        }
-
-        $(document).ready(function() {
-            // Initialize components
-            const userTable = initializeDataTable();
-            setupExportUsers();
-            setupUserManagement();
-
-            // Form submission handler
-            $(document).on('submit', '#manage-user', function(e) {
-                e.preventDefault();
-                saveUser();
-            });
-
-            // Expose functions globally if needed
-            window.deleteUser = deleteUser;
-            window.saveUser = saveUser;
+    function setupUserManagement() {
+        // Add new user modal
+        $('#new_user').on('click', function() {
+            uni_modal('Add New User', 'manage_user.php', 'modal-lg');
         });
 
-    })(jQuery);
+        // Edit user modal
+        $(document).on('click', '.edit_user', function() {
+            uni_modal('Edit User', 'manage_user.php?id=' + $(this).data('id'), 'modal-lg');
+        });
+
+        // View user details modal
+        $(document).on('click', '.view_user', function() {
+            uni_modal('User  Details', 'view_user.php?id=' + $(this).data('id'), 'modal-lg');
+        });
+
+        // Delete user confirmation
+        $(document).on('click', '.delete_user', function() {
+            const userId = $(this).data('id');
+            _conf("Are you sure you want to delete this user?", deleteUser , [userId]);
+        });
+    }
+
+    // Delete user function
+    function deleteUser (id) {
+        // Start loading
+        start_load();
+
+        $.ajax({
+            url: 'ajax.php?action=delete_user',
+            method: 'POST',
+            dataType: 'json',
+            data: { id: id },
+            success: function(response) {
+                // Stop loading
+                end_load();
+
+                if (response.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: response.message
+                    }).then(() => {
+                        // Reload the page or remove the row
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                // Stop loading
+                end_load();
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Something went wrong: ' + error
+                });
+            }
+        });
+    }
+
+    // Save user function
+    function saveUser () {
+        // Start loading
+        start_load();
+
+        // Serialize form data
+        const formData = $('#manage-user').serialize();
+
+        $.ajax({
+            url: 'ajax.php?action=save_user',
+            method: 'POST',
+            dataType: 'json',
+            data: formData,
+            success: function(response) {
+                // Stop loading
+                end_load();
+
+                if (response.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.message
+                    }).then(() => {
+                        // Close modal and reload page
+                        $('#uni_modal').modal('hide');
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                // Stop loading
+                end_load();
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An unexpected error occurred: ' + error
+                });
+            }
+        });
+    }
+
+    function start_load() {
+        $('body').prepend('<div class="loader-container"><div class="loader"></div></div>');
+    }
+
+    // Loading indicator end
+    function end_load() {
+        $('.loader-container').remove();
+    }
+
+    // Confirmation dialog
+    function _conf(msg, func, params = []) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: msg,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, proceed!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Call the function with provided parameters
+                func(...params);
+            }
+        });
+    }
+
+    // Modal function
+    function uni_modal(title, url, size = 'modal-lg') {
+        $('#uni_modal .modal-title').text(title);
+        $('#uni_modal .modal-body').load(url);
+        $('#uni_modal').modal('show');
+    }
+
+    $(document).ready(function() {
+        // Initialize components
+        const userTable = initializeDataTable();
+        setupExportUsers();
+        setupUserManagement();
+
+        // Form submission handler
+        $(document).on('submit', '#manage-user', function(e) {
+            e.preventDefault();
+            saveUser ();
+        });
+
+        // Expose functions globally if needed
+        window.deleteUser  = deleteUser ;
+        window.saveUser  = saveUser ;
+    });
+
+})(jQuery);
 </script>
 
 <style>
-    .loader-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
+.loader-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
 
-    .loader {
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #3498db;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-    }
+.loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
 
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
-    }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 </style>

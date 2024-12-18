@@ -1,29 +1,29 @@
 <style>
   .logo {
-    margin: 0; 
-    padding: 0; 
-    display: flex; 
-    align-items: center; 
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
   }
 
   .navbar {
-    padding: 0.5rem 1rem; 
-    background-color: #213555; 
+    padding: 0.5rem 1rem;
+    background-color: #213555;
   }
 
   .navbar .navbar-brand {
-    font-size: 1.5rem; 
-    font-weight: bold; 
-    color: #D8C4B6; 
-}
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #D8C4B6;
+  }
 
   .logout-link {
-    color: white; 
-    text-decoration: none; 
+    color: white;
+    text-decoration: none;
   }
 
   .logout-link:hover {
-    text-decoration: underline; 
+    text-decoration: underline;
   }
 </style>
 

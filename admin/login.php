@@ -4,145 +4,211 @@
 <head>
 	<meta charset="utf-8">
 	<meta content="width=device-width, initial-scale=1.0" name="viewport">
-
 	<title>Admin | Flight Booking System</title>
-
-
 	<?php include('./header.php'); ?>
 	<?php include('./db_connect.php'); ?>
+
 	<?php
 	session_start();
 	if (isset($_SESSION['login_id']))
 		header("location:index.php?page=home");
-
 	?>
+	<style>
+		html {
+			height: 100%;
+		}
 
+		body {
+			margin: 0;
+			padding: 0;
+			font-family: sans-serif;
+			background: linear-gradient(#30142b, #2772a1);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.login-page {
+			width: 400px;
+			padding: 8% 0 0;
+			margin: auto;
+		}
+
+		.form {
+			position: relative;
+			z-index: 1;
+			text-align: center;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 400px;
+			padding: 40px;
+			transform: translate(-50%, -50%);
+			background: rgba(0, 0, 0, .5);
+			box-sizing: border-box;
+			box-shadow: 0 15px 25px rgba(0, 0, 0, .6);
+			border-radius: 10px;
+		}
+
+		.form input {
+			width: 100%;
+			padding: 10px 0;
+			font-size: 13px;
+			color: #fff;
+			margin-bottom: 30px;
+			border: none;
+			border-bottom: 1px solid #fff;
+			outline: none;
+			background: transparent;
+		}
+
+		h2 {
+			color: white;
+		}
+
+		.form .message {
+			margin: 15px 0 0;
+			color: #b3b3b3;
+			font-size: 12px;
+		}
+
+		.form .message a {
+			color: #289bb8;
+			text-decoration: none;
+		}
+
+		.form .register-form {
+			display: none;
+		}
+
+		.btn {
+			position: relative;
+			display: inline-block;
+			padding: 10px 20px;
+			color: #289bb8;
+			font-size: 16px;
+			text-decoration: none;
+			overflow: hidden;
+			transition: .5s;
+			margin-top: 15px;
+			letter-spacing: 2px;
+		}
+
+		.btn:hover {
+			background: #289bb8;
+			color: #fff;
+			border-radius: 5px;
+			box-shadow: 0 0 5px #289bb8,
+				0 0 25px #289bb8,
+				0 0 50px #289bb8,
+				0 0 100px #289bb8;
+		}
+	</style>
 </head>
-<style>
-	body {
-		width: 100%;
-		height: calc(100%);
-		/*background: #007bff;*/
-	}
-
-	main#main {
-		width: 100%;
-		height: calc(100%);
-		background: white;
-	}
-
-	#login-right {
-		position: absolute;
-		right: 0;
-		width: 40%;
-		height: calc(100%);
-		background: white;
-		display: flex;
-		align-items: center;
-	}
-
-	#login-left {
-		position: absolute;
-		left: 0;
-		width: 60%;
-		height: calc(100%);
-		background: #59b6ec61;
-		display: flex;
-		align-items: center;
-		background: url(../assets/img/travel-cover.jpg);
-		background-repeat: no-repeat;
-		background-size: cover;
-	}
-
-	#login-right .card {
-		margin: auto;
-		z-index: 1
-	}
-
-	.logo {
-		margin: auto;
-		font-size: 8rem;
-		background: #213555;
-		padding: .5em 0.7em;
-		border-radius: 50% 50%;
-		color: #000000b3;
-		z-index: 10;
-	}
-
-	div#login-left::before,
-	div#login-right::before {
-		content: "";
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: calc(100%);
-		height: calc(100%);
-		background: #00c4ff36;
-	}
-</style>
 
 <body>
+	<div class="container px-3 py-5 px-md-5 text-start text-lg-start my-5">
+		<div class="row gx-lg-5 align-items-center mb-5">
+			<div class="col-lg-6 mb-5 mb-lg-0" style="z-index: 10; display: flex; flex-direction: column; align-items: flex-start;">
 
 
-	<main id="main" class=" bg-dark">
-		<div id="login-left">
-			<div class="logo">
-				<img src="../assets/img//5-removebg-preview.png" alt="logo">
-
+				<h1 style="color: white;">
+					To A Better<br />
+					<span style="color: hsl(218, 81%, 75%)">Flight Experience</span>
+				</h1>
+				<p class="mb-4 opacity-70" style="color: #f0f0f0">
+					Lorem ipsum dolor sit amet consectetur adipisicing elit. Magnam, ullam nisi voluptatibus fuga possimus, illum itaque maxime fugiat, id nam voluptas atque cum distinctio consectetur ut. Ab, nihil? Possimus, delectus?
+				</p>
 			</div>
-		</div>
-		<div id="login-right">
-			<div class="card col-md-8">
-				<div class="card-body">
-					<form id="login-form">
-						<div class="form-group">
-							<label for="username" class="control-label">Username</label>
-							<input type="text" id="username" name="username" class="form-control">
-						</div>
-						<div class="form-group">
-							<label for="password" class="control-label">Password</label>
-							<input type="password" id="password" name="password" class="form-control">
-						</div>
-						<center><button class="btn-sm btn-block btn-wave col-md-4 btn-primary">Login</button></center>
-					</form>
+			<div class="col-lg-6">
+				<div class="login-page">
+					<div class="form">
+						<form class="register-form" method="POST">
+							<h2>Register</h2>
+							<input type="text" placeholder="Full Name *" name="name" required />
+							<input type="text" placeholder="Username *" name="username" required />
+							<input type="email" placeholder="Email *" name="email" required />
+							<input type="password" placeholder="Password *" name="password" required />
+							<button type="submit" class="btn">Create</button>
+							<p class="message">Already registered? <a href="#">Sign In</a></p>
+						</form>
+						<form class="login-form" method="POST">
+							<div class="d-flex justify-content-center mb-3">
+								<img src="assets/img/login.png" alt="logo" class="img-fluid" style="max-width: 150px; height: auto;">
+							</div>
+							<h2>Login</h2>
+							<input type="text" placeholder="Username" name="username" required />
+							<input type="password" placeholder="Password" name="password" required />
+							<button type="submit" class="btn">Sign in</button>
+							<p class="message">Not registered? <a href="#">Create an account</a></p>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>
+	</div>
 
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script>
+		$('.message a').click(function(e) {
+			e.preventDefault(); // Prevent the default anchor behavior
+			$('form').animate({
+				height: "toggle",
+				opacity: "toggle"
+			}, "slow");
+		});
 
-	</main>
+		// Handle the login form submission
+		$('.login-form').submit(function(e) {
+			e.preventDefault();
+			const $button = $(this).find('button[type="submit"]');
+			$button.attr('disabled', true).text('Logging in...');
 
-	<a href="#" class="back-to-top"><i class="icofont-simple-up"></i></a>
-
-
-</body>
-<script>
-	$('#login-form').submit(function(e) {
-		e.preventDefault()
-		$('#login-form button[type="button"]').attr('disabled', true).html('Logging in...');
-		if ($(this).find('.alert-danger').length > 0)
-			$(this).find('.alert-danger').remove();
-		$.ajax({
-			url: 'ajax.php?action=login',
-			method: 'POST',
-			data: $(this).serialize(),
-			error: err => {
-				console.log(err)
-				$('#login-form button[type="button"]').removeAttr('disabled').html('Login');
-
-			},
-			success: function(resp) {
-				if (resp == 1) {
-					location.href = 'index.php?page=home';
-				} else if (resp == 2) {
-					location.href = 'voting.php';
-				} else {
-					$('#login-form').prepend('<div class="alert alert-danger">Username or password is incorrect.</div>')
-					$('#login-form button[type="button"]').removeAttr('disabled').html('Login');
+			$.ajax({
+				url: 'ajax.php?action=login',
+				method: 'POST',
+				data: $(this).serialize(),
+				error: function(err) {
+					console.log(err);
+					$button.removeAttr('disabled').text('Sign in');
+				},
+				success: function(resp) {
+					if (resp == 1) {
+						location.href = 'index.php?page=home';
+					} else {
+						$('.login-form').prepend('<div class="alert alert-danger">Username or password is incorrect.</div>');
+						$button.removeAttr('disabled').text('Sign in');
+					}
 				}
-			}
-		})
-	})
-</script>
+			});
+		});
+
+		$('.register-form').submit(function(e) {
+			e.preventDefault();
+			const $button = $(this).find('button[type="submit"]');
+			$button.attr('disabled', true).text('Creating...');
+
+			$.ajax({
+				url: 'ajax.php?action=register',
+				method: 'POST',
+				data: $(this).serialize(),
+				error: function(err) {
+					console.log(err);
+					$button.removeAttr('disabled').text('Create');
+				},
+				success: function(resp) {
+					if (resp == 1) {
+						alert('Registration successful! You can now log in.');
+						$('.register-form').hide();
+						$('.login-form').show();
+					} else {
+						$('.register-form').prepend('<div class="alert alert-danger">Registration failed. Please try again.</div>');
+						$button.removeAttr('disabled').text('Create');
+					}
+				}
+			});
+		});
+	</script>
+</body>
 
 </html>

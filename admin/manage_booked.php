@@ -29,7 +29,7 @@ foreach ($qry->fetch_array() as $k => $v) {
 			<div class="row">
 				<div class="col-md-12 text-center">
 					<button class="btn btn-primary btn-sm" type="submit">Save</button>
-					<button class="btn btn-secondary btn-sm" type="button" data-dismiss="modal">Cancel</button>
+					<button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancel</button>
 				</div>
 			</div>
 		</form>
@@ -40,25 +40,25 @@ foreach ($qry->fetch_array() as $k => $v) {
 	$('#book-flight').submit(function(e) {
 		e.preventDefault();
 		start_load();
+
 		$.ajax({
 			url: 'ajax.php?action=update_booked',
-			method: "POST",
+			method: 'POST',
 			data: $(this).serialize(),
 			success: function(resp) {
+				end_load();
 				if (resp == 1) {
 					$('.modal').modal('hide');
-					alert_toast("Booked Flight successfully updated.", "success");
-					setTimeout(function() {
-						location.reload();
-					}, 1500);
+					alert_toast('Booked Flight successfully updated.', 'success');
+					setTimeout(() => location.reload(), 1500);
 				} else {
-					alert_toast("An error occurred while updating the booking.", "danger");
+					alert_toast('An error occurred while updating the booking.', 'danger');
 				}
-				end_load();
 			},
-			error: function() {
-				alert_toast("An error occurred while processing your request.", "danger");
+			error: function(xhr, status, error) {
 				end_load();
+				console.error('Error:', status, error);
+				alert_toast('An error occurred while processing your request.', 'danger');
 			}
 		});
 	});

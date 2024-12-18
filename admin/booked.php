@@ -1,4 +1,28 @@
-<?php include 'db_connect.php'; ?>
+<?php
+include('db_connect.php');
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_GET['action']) && $_GET['action'] == 'update_booked') {
+    $id = intval($_POST['id']);
+    $name = $conn->real_escape_string($_POST['name']);
+    $contact = $conn->real_escape_string($_POST['contact']);
+    $address = $conn->real_escape_string($_POST['address']);
+    $status = $conn->real_escape_string($_POST['status']);
+
+    $stmt = $conn->prepare("UPDATE booked_flight SET name = ?, contact = ?, address = ? WHERE id = ?");
+    $stmt->bind_param("sssi", $name, $contact, $address, $id);
+
+    // Execute the statement
+    if ($stmt->execute()) {
+        echo 1; // Success
+    } else {
+        error_log("SQL Error: " . $stmt->error); // Log the error for debugging
+        echo 0; // Failure
+    }
+
+    $stmt->close();
+    $conn->close();
+}
+?>
 
 <div class="container-fluid pt-3">
 	<div class="col-lg-12">
@@ -90,88 +114,56 @@
 </style>
 
 <script>
-	$(document).ready(function() {
-		$('#flight-list').dataTable();
+    $(document).ready(function() {
+        $('#flight-list').dataTable();
 
-		$('#new_booked').click(function() {
-			uni_modal("New Flight", "manage_booked.php", 'mid-large');
-		});
+        $('#new_booked').click(function() {
+            uni_modal("New Flight", "manage_booked.php", 'mid-large');
+        });
 
-		$('.edit_booked').click(function() {
-			uni_modal("Edit Information", "manage_booked.php?id=" + $(this).attr('data-id'), 'mid-large');
-		});
+        $('.edit_booked').click(function() {
+            uni_modal("Edit Information", "manage_booked.php?id=" + $(this).attr('data-id'), 'mid-large');
+        });
 
-		$('.delete_booked').click(function() {
-			_conf("Are you sure to delete this data?", "delete_booked", [$(this).attr('data-id')]);
-		});
+        $('.delete_booked').click(function() {
+            _conf("Are you sure to delete this data?", "delete_booked", [$(this).attr('data-id')]);
+        });
 
-		$('.accept_booking').click(function() {
-			const id = $(this).attr('data-id');
-			_conf("Are you sure you want to accept this booking?", "accept_booking", [id]);
-		});
+        $('.accept_booking').click(function() {
+            const id = $(this).attr('data-id');
+            _conf("Are you sure you want to accept this booking?", "accept_booking", [id]);
+        });
 
-		$('.decline_booking').click(function() {
-			const id = $(this).attr('data-id');
-			_conf("Are you sure you want to decline this booking?", "decline_booking", [id]);
-		});
-	});
+        $('.decline_booking').click(function() {
+            const id = $(this).attr('data-id');
+            _conf("Are you sure you want to decline this booking?", "decline_booking", [id]);
+        });
+    });
 
-	function delete_booked($id) {
-		start_load();
-		$.ajax({
-			url: 'ajax.php?action=delete_flight',
-			method: 'POST',
-			data: {
-				id: $id
-			},
-			success: function(resp) {
-				if (resp == 1) {
-					alert_toast("Flight successfully deleted", 'success');
-					setTimeout(function() {
-						location.reload();
-					}, 1500);
-				}
-			}
-		});
-	}
+    $('#book-flight').submit(function(e) {
+        e.preventDefault();
+        start_load();
 
-	function accept_booking($id) {
-		start_load();
-		$.ajax({
-			url: 'ajax.php?action=update_booking_status',
-			method: 'POST',
-			data: {
-				id: $id,
-				status: 'accepted'
-			},
-			success: function(resp) {
-				if (resp == 1) {
-					alert_toast("Booking successfully accepted", 'success');
-					setTimeout(function() {
-						location.reload();
-					}, 1500);
-				}
-			}
-		});
-	}
-
-	function decline_booking($id) {
-		start_load();
-		$.ajax({
-			url: 'ajax.php?action=update_booking_status',
-			method: 'POST',
-			data: {
-				id: $id,
-				status: 'declined'
-			},
-			success: function(resp) {
-				if (resp == 1) {
-					alert_toast("Booking successfully declined", 'success');
-					setTimeout(function() {
-						location.reload();
-					}, 1500);
-				}
-			}
-		});
-	}
+        $.ajax({
+            url: 'ajax.php?action=update_booked',
+            method: 'POST',
+            data: $(this).serialize(),
+            success: function(resp) {
+                end_load();
+                console.log('Response:', resp); // Log the response for debugging
+                if (resp == 1) {
+                    $('.modal').modal('hide');
+                    alert_toast('Booked Flight successfully updated.', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alert_toast('An error occurred while updating the booking.', 'danger');
+                }
+            },
+            error: function(xhr, status, error) {
+                end_load();
+                console.error('Error:', status, error);
+                alert_toast('An error occurred while processing your request.', 'danger');
+            }
+        });
+    });
 </script>

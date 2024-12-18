@@ -32,12 +32,12 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     http_response_code(404);
-    die(json_encode(['error' => 'User not found']));
+    die(json_encode(['error' => 'User  not found']));
 }
 
 $user = $result->fetch_assoc();
 
-// Fetch recent bookings (modify this query based on your actual database schema)
+// Fetch recent bookings
 $bookings_stmt = $conn->prepare("
     SELECT 
         bf.id, 
@@ -76,8 +76,8 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
     <div class="container-fluid">
         <div class="row">
             <!-- Profile Header -->
-            <div class="col-12 user-profile-header text-center mb-4">
-                <div class="avatar-container">
+            <div class="col-12 text-center mb-4">
+                <div class="avatar-container mb-3">
                     <div class="avatar bg-gradient-primary text-white rounded-circle d-flex align-items-center justify-content-center">
                         <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
                     </div>
@@ -106,8 +106,8 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
             </div>
 
             <!-- User Details -->
-            <div class="col-md-6">
-                <div class="card mb-4">
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm">
                     <div class="card-header bg-primary text-white d-flex align-items-center">
                         <i class="fas fa-user mr-2"></i>
                         <h5 class="card-title mb-0">Personal Information</h5>
@@ -115,7 +115,7 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
                     <div class="card-body">
                         <table class="table table-borderless">
                             <tr>
-                                <th class="w-40"><i class="fas fa-envelope mr-2"></i>Username</th>
+                                <th><i class="fas fa-envelope mr-2"></i>Username</th>
                                 <td><?php echo htmlspecialchars($user['username']); ?></td>
                             </tr>
                             <tr>
@@ -132,8 +132,8 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
             </div>
 
             <!-- Account Stats -->
-            <div class="col-md-6">
-                <div class="card mb-4">
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm">
                     <div class="card-header bg-success text-white d-flex align-items-center">
                         <i class="fas fa-chart-bar mr-2"></i>
                         <h5 class="card-title mb-0">Account Statistics</h5>
@@ -150,7 +150,7 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
                             </li>
                             <li>
                                 <strong><i class="fas fa-plane mr-2"></i>Total Bookings:</strong>
-                                <?php echo $user['total_bookings'] ?? 0; ?>
+                                <?php echo $total_bookings; ?>
                             </li>
                         </ul>
                     </div>
@@ -159,7 +159,7 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
 
             <!-- Recent Bookings -->
             <div class="col-12">
-                <div class="card">
+                <div class="card shadow-sm">
                     <div class="card-header bg-info text-white d-flex align-items-center">
                         <i class="fas fa-history mr-2"></i>
                         <h5 class="card-title mb-0">Recent Bookings</h5>
@@ -189,7 +189,6 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
                                                     <?php echo htmlspecialchars($booking['arrival_airport']); ?><br>
                                                     <small><?php echo date('M j, Y H:i', strtotime($booking['arrival_datetime'])); ?></small>
                                                 </td>
-
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -205,7 +204,6 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
     </div>
 </div>
 
-
 <script>
     $(document).ready(function() {
         // Function to view booking details
@@ -219,8 +217,6 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
                     id: bookingId
                 },
                 success: function(data) {
-                    // Handle success response
-                    // Display booking details in a modal or alert
                     alert('Booking details: ' + JSON.stringify(data));
                 },
                 error: function() {
@@ -257,6 +253,11 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
     .card {
         border: 1px solid #dee2e6;
         border-radius: 5px;
+        transition: transform 0.2s;
+    }
+
+    .card:hover {
+        transform: scale(1.02);
     }
 
     .card-header {
@@ -266,5 +267,13 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
     .table th,
     .table td {
         vertical-align: middle;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f2f2f2;
+    }
+
+    .badge {
+        font-size: 0.9rem;
     }
 </style>

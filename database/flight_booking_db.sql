@@ -185,7 +185,7 @@ CREATE INDEX idx_flight_airport ON airport_list (location);
 -- Index on Booked Flight for Flight ID
 CREATE INDEX idx_booked_flight ON booked_flight (flight_id);
 
-ALTER TABLE booked_flight ADD COLUMN status ENUM('pending', 'accepted') DEFAULT 'pending';
+ALTER TABLE booked_flight ADD COLUMN status ENUM('pending', 'accepted', 'decline') DEFAULT 'pending';
 
 -- Scalar Function
 DELIMITER $$

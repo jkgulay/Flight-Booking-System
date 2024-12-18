@@ -195,7 +195,7 @@ if($_SERVER['REQUEST_METHOD'] == "POST"){
     <script>
         
        $('.view_schedule').click(function(){
-			uni_modal($(this).attr('data-name')+" - Schedule","view_doctor_schedule.php?id="+$(this).attr('data-id'))
+			uni_modal($(this).attr('data-name')+" - Schedule","view_user_schedule.php?id="+$(this).attr('data-id'))
 		})
        $('.book_flight').click(function(){
        	if($(this).attr('data-max') <= 0){

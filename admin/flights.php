@@ -1,4 +1,18 @@
-<?php include 'db_connect.php'; ?>
+<?php
+include 'db_connect.php';
+
+function get_flight_price($flight_id)
+{
+    global $conn;
+    $query = "SELECT price FROM flight_list WHERE id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $flight_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $price = $result->fetch_assoc();
+    return $price ? $price['price'] : null; 
+}
+?>
 
 <div class="container-fluid pt-3">
     <div class="col-lg-12">
@@ -49,6 +63,7 @@
                                             ORDER BY f.id DESC");
                         while ($row = $qry->fetch_assoc()):
                             $booked = $conn->query("SELECT * FROM booked_flight WHERE flight_id = " . $row['id'])->num_rows;
+                            $price = get_flight_price($row['id']); 
                         ?>
                             <tr>
                                 <td><?php echo date('M d, Y', strtotime($row['date_created'])) ?></td>
@@ -61,7 +76,7 @@
                                             <p>Airline: <b><?php echo htmlspecialchars($row['airlines']) ?></b></p>
                                             <p>
                                                 Location: <b>
-                                                    <?php 
+                                                    <?php
                                                     echo isset($aname[$row['departure_airport_id']]) ? $aname[$row['departure_airport_id']] : "Unknown Airport";
                                                     echo " - ";
                                                     echo isset($aname[$row['arrival_airport_id']]) ? $aname[$row['arrival_airport_id']] : "Unknown Airport";
@@ -76,7 +91,7 @@
                                 <td class="text-right"><?php echo number_format($row['seats']) ?></td>
                                 <td class="text-right"><?php echo $booked ?></td>
                                 <td class="text-right"><?php echo max(0, $row['seats'] - $booked) ?></td>
-                                <td class="text-right"><?php echo number_format($row['price'], 2) ?></td>
+                                <td class="text-right"><?php echo number_format($price, 2) ?></td> <!-- Display the price -->
                                 <td class="text-center">
                                     <button class="btn btn-outline-primary btn-sm edit_flight" type="button" data-id="<?php echo $row['id'] ?>">
                                         <i class="fa fa-edit"></i>
@@ -98,10 +113,12 @@
     td p {
         margin: unset;
     }
+
     td img {
         width: 8vw;
         height: 12vh;
     }
+
     td {
         vertical-align: middle !important;
     }
@@ -111,15 +128,15 @@
     $(document).ready(function() {
         $('#flight-list').DataTable();
 
-        $('#new_flight').click(function () {
+        $('#new_flight').click(function() {
             uni_modal("New Flight", "manage_flight.php", 'mid-large');
         });
 
-        $('.edit_flight').click(function () {
+        $('.edit_flight').click(function() {
             uni_modal("Edit Flight", "manage_flight.php?id=" + $(this).attr('data-id'), 'mid-large');
         });
 
-        $('.delete_flight').click(function () {
+        $('.delete_flight').click(function() {
             _conf("Are you sure you want to delete this flight?", "delete_flight", [$(this).attr('data-id')]);
         });
     });
@@ -129,11 +146,13 @@
         $.ajax({
             url: 'ajax.php?action=delete_flight',
             method: 'POST',
-            data: { id: id },
-            success: function (response) {
+            data: {
+                id: id
+            },
+            success: function(response) {
                 if (response == 1) {
                     alert_toast("Flight successfully deleted", 'success');
-                    setTimeout(function () {
+                    setTimeout(function() {
                         location.reload();
                     }, 1500);
                 } else {

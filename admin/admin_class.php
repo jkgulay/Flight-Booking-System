@@ -244,9 +244,9 @@ class Action
     function delete_user()
     {
         if (isset($_POST['id'])) {
-            $id = $_POST['id']; 
+            $id = $_POST['id'];
             $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
-            $stmt->bind_param("i", $id); 
+            $stmt->bind_param("i", $id);
             $stmt->execute();
 
             if ($stmt->affected_rows > 0) {
@@ -332,18 +332,25 @@ class Action
         return 0;
     }
 
-    // Update booked flight
     function update_booked()
     {
         extract($_POST);
-        $data = "name = ?, address = ?, contact = ?";
-        $stmt = $this->db->prepare("UPDATE booked_flight SET $data WHERE id = ?");
+
+        // Validate input
+        if (empty($name) || empty($address) || empty($contact) || empty($id)) {
+            return json_encode(['status' => 'error', 'message' => 'All fields are required.']);
+        }
+
+        // Prepare the SQL statement
+        $stmt = $this->db->prepare("UPDATE booked_flight SET name = ?, address = ?, contact = ? WHERE id = ?");
         $stmt->bind_param("sssi", $name, $address, $contact, $id);
         $stmt->execute();
 
+        // Check if the update was successful
         if ($stmt->affected_rows > 0) {
-            return 1;
+            return json_encode(['status' => 'success', 'message' => 'Booking updated successfully.']);
         }
-        return 0;
+
+        return json_encode(['status' => 'error', 'message' => 'Failed to update booking or no changes made.']);
     }
 }

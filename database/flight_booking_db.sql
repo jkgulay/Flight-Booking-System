@@ -105,7 +105,7 @@ CREATE TABLE `users` (
   `contact` TEXT NOT NULL,
   `username` VARCHAR(100) NOT NULL,
   `password` VARCHAR(200) NOT NULL,
-  `type` TINYINT(1) NOT NULL DEFAULT 2 COMMENT '1=admin , 2 = staff, 3=patient',
+  `type` TINYINT(1) NOT NULL DEFAULT 2 COMMENT '1=admin , 2 = staff, 3=customer',
   PRIMARY KEY (`id`),
   INDEX (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

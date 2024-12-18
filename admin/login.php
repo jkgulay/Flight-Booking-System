@@ -5,8 +5,12 @@
 	<meta charset="utf-8">
 	<meta content="width=device-width, initial-scale=1.0" name="viewport">
 	<title>Admin | Flight Booking System</title>
-	<?php include('./header.php'); ?>
-	<?php include('./db_connect.php'); ?>
+
+	<?php
+	include 'db_connect.php';
+	include 'header.php';
+	?>
+
 
 	<?php
 	session_start();
@@ -117,8 +121,7 @@
 					<span style="color: hsl(218, 81%, 75%)">Flight Experience</span>
 				</h1>
 				<p class="mb-4 opacity-70" style="color: #f0f0f0">
-					Lorem ipsum dolor sit amet consectetur adipisicing elit. Magnam, ullam nisi voluptatibus fuga possimus, illum itaque maxime fugiat, id nam voluptas atque cum distinctio consectetur ut. Ab, nihil? Possimus, delectus?
-				</p>
+					a web-based application designed to facilitate the booking and management of flight reservations. This system aims to enhance user experience by providing a seamless interface for searching, booking, and managing flights. </p>
 			</div>
 			<div class="col-lg-6">
 				<div class="login-page">
@@ -128,13 +131,15 @@
 							<input type="text" placeholder="Full Name *" name="name" required />
 							<input type="text" placeholder="Username *" name="username" required />
 							<input type="email" placeholder="Email *" name="email" required />
+							<input type="contact" placeholder="Contact Number *" name="contact" required />
+							<input type="address" placeholder="Address *" name="address" required />
 							<input type="password" placeholder="Password *" name="password" required />
-							<button type="submit" class="btn">Create</button>
+							<button type="signup" class="btn">Create</button>
 							<p class="message">Already registered? <a href="#">Sign In</a></p>
 						</form>
 						<form class="login-form" method="POST">
 							<div class="d-flex justify-content-center mb-3">
-								<img src="assets/img/login.png" alt="logo" class="img-fluid" style="max-width: 150px; height: auto;">
+								<img src="assets/img/login.png" alt="logo" class="img-fluid" style="max-width: 185px; height: auto;">
 							</div>
 							<h2>Login</h2>
 							<input type="text" placeholder="Username" name="username" required />
@@ -184,26 +189,27 @@
 		});
 
 		$('.register-form').submit(function(e) {
-			e.preventDefault();
-			const $button = $(this).find('button[type="submit"]');
+			e.preventDefault(); 
+			const $button = $(this).find('button[type="signup"]');
 			$button.attr('disabled', true).text('Creating...');
 
 			$.ajax({
-				url: 'ajax.php?action=register',
+				url: 'ajax.php?action=signup', 
 				method: 'POST',
-				data: $(this).serialize(),
+				data: $(this).serialize(), 
 				error: function(err) {
-					console.log(err);
-					$button.removeAttr('disabled').text('Create');
+					console.log(err); 
+					$button.removeAttr('disabled').text('Create'); 
 				},
 				success: function(resp) {
-					if (resp == 1) {
-						alert('Registration successful! You can now log in.');
-						$('.register-form').hide();
-						$('.login-form').show();
+					const response = JSON.parse(resp); 
+					if (response.status === 'success') {
+						alert('Registration successful! You can now log in.'); 
+						$('.register-form').hide(); 
+						$('.login-form').show(); 
 					} else {
-						$('.register-form').prepend('<div class="alert alert-danger">Registration failed. Please try again.</div>');
-						$button.removeAttr('disabled').text('Create');
+						$('.register-form').prepend('<div class="alert alert-danger">' + response.message + '</div>');
+						$button.removeAttr('disabled').text('Create'); 
 					}
 				}
 			});

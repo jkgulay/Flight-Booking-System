@@ -23,6 +23,7 @@
     header('location:login.php');
   include('./header.php');
   // include('./auth.php'); 
+  include('./db_connect.php');
   ?>
 
 </head>

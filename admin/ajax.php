@@ -5,16 +5,19 @@ header('Content-Type: application/json');
 include 'admin_class.php';
 $crud = new Action();
 
-function sendJsonResponse($status, $message, $data = null) {
+session_start();
+
+function sendJsonResponse($status, $message, $data = null)
+{
     $response = [
         'status' => $status,
         'message' => $message
     ];
-    
+
     if ($data !== null) {
         $response['data'] = $data;
     }
-    
+
     echo json_encode($response);
     exit;
 }
@@ -28,9 +31,7 @@ try {
 
     $actionMap = [
         'login' => 'login',
-        'login2' => 'login2',
         'logout' => 'logout',
-        'logout2' => 'logout2',
         'save_user' => 'save_user',
         'delete_user' => 'delete_user',
         'signup' => 'signup',
@@ -56,7 +57,7 @@ try {
         sendJsonResponse('error', 'Operation failed');
     } elseif (is_string($result)) {
         $parsedResult = json_decode($result, true);
-        
+
         if (json_last_error() === JSON_ERROR_NONE) {
             echo $result;
         } else {
@@ -65,7 +66,6 @@ try {
     } else {
         sendJsonResponse('success', 'Operation completed', $result);
     }
-
 } catch (Exception $e) {
     sendJsonResponse('error', 'An unexpected error occurred: ' . $e->getMessage());
 }

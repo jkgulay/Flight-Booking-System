@@ -1,7 +1,7 @@
 <?php
 session_start();
 ini_set('display_errors', 1);
-
+session_start();
 class Action
 {
     private $db;
@@ -22,44 +22,31 @@ class Action
     function login()
     {
         extract($_POST);
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? AND password = ?");
-        $stmt->bind_param("ss", $username, $password); // Bind parameters
+
+        // Prepare the SQL statement to prevent SQL injection
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
+
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
-            foreach ($user as $key => $value) {
-                if ($key != 'password' && !is_numeric($key))
-                    $_SESSION['login_' . $key] = $value;
+
+            if (password_verify($password, $user['password'])) {
+                foreach ($user as $key => $value) {
+                    if ($key != 'password' && !is_numeric($key)) {
+                        $_SESSION['login_' . $key] = $value;
+                    }
+                }
+                return 1; 
+            } else {
+                return 3; 
             }
-            return 1;
         } else {
-            return 3;
+            return 2; 
         }
     }
 
-    // Improved login2 with prepared statement
-    function login2()
-    {
-        extract($_POST);
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? AND password = ?");
-        $hashed_password = md5($password);
-        $stmt->bind_param("ss", $email, $hashed_password);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result->num_rows > 0) {
-            $user = $result->fetch_assoc();
-            foreach ($user as $key => $value) {
-                if ($key != 'password' && !is_numeric($key))
-                    $_SESSION['login_' . $key] = $value;
-            }
-            return 1;
-        } else {
-            return 3;
-        }
-    }
-
-    // Improved logout method
     function logout()
     {
         session_destroy();
@@ -67,13 +54,7 @@ class Action
         header("location: login.php");
     }
 
-    // Improved logout2 method
-    function logout2()
-    {
-        session_destroy();
-        $_SESSION = [];
-        header("location: ../index.php");
-    }
+   
     function save_user()
     {
         extract($_POST);
@@ -145,27 +126,28 @@ class Action
     function signup()
     {
         extract($_POST);
+
+        // Check if the username already exists
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
-        $stmt->bind_param("s", $email);
+        $stmt->bind_param("s", $username); // Check against username, not email
         $stmt->execute();
         $result = $stmt->get_result();
+
         if ($result->num_rows > 0) {
-            return 2; // Email already exists
+            return json_encode(['status' => 'error', 'message' => 'Username already exists']);
         }
 
-        $hashed_password = md5($password);
-        $stmt = $this->db->prepare("INSERT INTO users (name, contact, address, username, password, type) 
-                                   VALUES (?, ?, ?, ?, ?, 3)");
-        $stmt->bind_param("sssss", $name, $contact, $address, $email, $hashed_password);
-        $stmt->execute();
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        if ($stmt->affected_rows > 0) {
-            $_SESSION['login_' . $stmt->insert_id] = $stmt->insert_id;
-            return 1;
+        $stmt = $this->db->prepare("INSERT INTO users (name, contact, address, username, password, type) VALUES (?, ?, ?, ?, ?, 3)");
+        $stmt->bind_param("sssss", $name, $contact, $address, $username, $hashed_password);
+
+        if ($stmt->execute()) {
+            return json_encode(['status' => 'success', 'message' => 'Registration successful!']);
         }
-        return 0;
+
+        return json_encode(['status' => 'error', 'message' => 'Registration failed.']);
     }
-
     function save_settings()
     {
         extract($_POST);
@@ -244,9 +226,9 @@ class Action
     function delete_user()
     {
         if (isset($_POST['id'])) {
-            $id = $_POST['id']; 
+            $id = $_POST['id'];
             $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
-            $stmt->bind_param("i", $id); 
+            $stmt->bind_param("i", $id);
             $stmt->execute();
 
             if ($stmt->affected_rows > 0) {

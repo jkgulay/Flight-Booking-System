@@ -190,7 +190,6 @@ class Action
         return 0;
     }
 
-    // Save airline
     function save_airlines()
     {
         extract($_POST);
@@ -204,7 +203,13 @@ class Action
             }
         }
 
-        $stmt = $this->db->prepare("INSERT INTO airlines_list SET $data ON DUPLICATE KEY UPDATE $data");
+        if (!empty($id)) {
+            $stmt = $this->db->prepare("UPDATE airlines_list SET $data WHERE id = ?");
+            $stmt->bind_param("i", $id);
+        } else {
+            $stmt = $this->db->prepare("INSERT INTO airlines_list SET $data");
+        }
+
         $stmt->execute();
 
         if ($stmt->affected_rows > 0) {
@@ -213,7 +218,6 @@ class Action
         return 0;
     }
 
-    // Delete airline
     function delete_airlines()
     {
         extract($_POST);

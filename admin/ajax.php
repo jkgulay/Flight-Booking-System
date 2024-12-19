@@ -7,8 +7,6 @@ include 'admin_class.php';
 include('db_connect.php');
 $crud = new Action();
 
-session_start();
-
 function sendJsonResponse($status, $message, $data = null)
 {
     $response = [

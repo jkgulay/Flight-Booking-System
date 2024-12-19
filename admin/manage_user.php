@@ -1,5 +1,7 @@
 <?php 
 include('db_connect.php');
+include('./header.php');
+
 
 // Secure the page and prevent SQL injection
 $user_id = isset($_GET['id']) ? intval($_GET['id']) : null;

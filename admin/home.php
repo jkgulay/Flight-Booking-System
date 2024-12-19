@@ -127,7 +127,6 @@ $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'];
                                     <tbody>
                                         <?php
                                         foreach ($flight_dates as $date):
-                                            // Query to get total flights and available seats for the date
                                             $flight_details_query = "
                             SELECT 
                                 COUNT(*) as total_flights,
@@ -138,14 +137,13 @@ $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'];
                                             $flight_details_result = $conn->query($flight_details_query);
                                             $flight_details = $flight_details_result->fetch_assoc();
 
-                                            // Get the booking count for each flight on that date
                                             $booking_count_query = "
                             SELECT SUM(get_booking_count_by_flight(id)) AS total_bookings
                             FROM flight_list
                             WHERE DATE(departure_datetime) = '$date'
                         ";
                                             $booking_count_result = $conn->query($booking_count_query);
-                                            $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'] ?? 0; // Default to 0 if NULL
+                                            $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'] ?? 0; 
                                         ?>
                                             <tr>
                                                 <td><?php echo htmlspecialchars($date); ?></td>
@@ -173,45 +171,6 @@ $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'];
     <!-- Footer -->
     <div class="footer mt-4">
         <p class="text-center text-muted">&copy; 2024 Flight Booking System. All rights reserved.</p>
-    </div>
-
-    <!-- Modals -->
-    <div class="modal fade" id="confirm_modal" role='dialog'>
-        <div class="modal-dialog modal-md" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmation</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div id="delete_content"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id='confirm'>Continue</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="uni_modal" role='dialog'>
-        <div class="modal-dialog modal-md" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"></h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body"></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id='submit' onclick="$('#uni_modal form').submit()">Save</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="assets/vendor/jquery/jquery.min.js"></script>

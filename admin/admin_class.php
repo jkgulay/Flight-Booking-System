@@ -1,7 +1,10 @@
 <?php
 session_start();
+error_reporting(E_ALL);
 ini_set('display_errors', 1);
-session_start();
+ini_set('display_errors', 1);
+header('Content-Type: application/json');
+
 class Action
 {
     private $db;
@@ -38,12 +41,12 @@ class Action
                         $_SESSION['login_' . $key] = $value;
                     }
                 }
-                return 1; 
+                return 1;
             } else {
-                return 3; 
+                return 3;
             }
         } else {
-            return 2; 
+            return 2;
         }
     }
 
@@ -54,7 +57,7 @@ class Action
         header("location: login.php");
     }
 
-   
+
     function save_user()
     {
         extract($_POST);
@@ -122,14 +125,13 @@ class Action
         return json_encode(['status' => 'error', 'message' => 'Failed to save user: ' . $this->db->error]);
     }
 
-    // Improved user signup
     function signup()
     {
         extract($_POST);
 
         // Check if the username already exists
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
-        $stmt->bind_param("s", $username); // Check against username, not email
+        $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -137,6 +139,7 @@ class Action
             return json_encode(['status' => 'error', 'message' => 'Username already exists']);
         }
 
+        // Hash the password
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         $stmt = $this->db->prepare("INSERT INTO users (name, contact, address, username, password, type) VALUES (?, ?, ?, ?, ?, 3)");
@@ -148,6 +151,7 @@ class Action
 
         return json_encode(['status' => 'error', 'message' => 'Registration failed.']);
     }
+
     function save_settings()
     {
         extract($_POST);

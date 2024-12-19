@@ -76,11 +76,9 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
     <div class="container-fluid">
         <div class="row">
             <!-- Profile Header -->
-            <div class="col-12 text-center mb-4">
-                <div class="avatar-container mb-3">
-                    <div class="avatar bg-gradient-primary text-white rounded-circle d-flex align-items-center justify-content-center">
-                        <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
-                    </div>
+            <div class="col-12 text-center mb-2">
+                <div class="avatar-container mb-2">
+
                 </div>
                 <h2 class="mt-3 mb-1"><?php echo htmlspecialchars($user['name']); ?></h2>
                 <p class="text-muted">
@@ -106,7 +104,7 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
             </div>
 
             <!-- User Details -->
-            <div class="col-md-6 mb-4">
+            <div class="col-md-12 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-header bg-primary text-white d-flex align-items-center">
                         <i class="fas fa-user mr-2"></i>
@@ -132,7 +130,7 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
             </div>
 
             <!-- Account Stats -->
-            <div class="col-md-6 mb-4">
+            <div class="col-md-12 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-header bg-success text-white d-flex align-items-center">
                         <i class="fas fa-chart-bar mr-2"></i>

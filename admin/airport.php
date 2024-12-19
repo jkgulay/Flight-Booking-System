@@ -37,6 +37,7 @@
 								placeholder="Enter airport location"
 								required></textarea>
 						</div>
+
 					</div>
 					<div class="card-footer">
 						<div class="row">
@@ -86,17 +87,12 @@
 								?>
 									<tr>
 										<td class="text-center"><?php echo $i++ ?></td>
-										<td>
-											<div class="d-flex align-items-center">
-
-												<?php echo htmlspecialchars($row['airport']) ?>
-											</div>
-										</td>
+										<td><?php echo htmlspecialchars($row['airport']) ?></td>
 										<td><?php echo htmlspecialchars($row['location']) ?></td>
 										<td class="text-center">
 											<div class="btn-group" role="group">
 												<button
-													class="btn btn-sm btn-warning edit_airline"
+													class="btn btn-sm btn-warning edit_airport"
 													data-id="<?php echo $row['id'] ?>"
 													data-airport="<?php echo htmlspecialchars($row['airport']) ?>"
 													data-location="<?php echo htmlspecialchars($row['location']) ?>"
@@ -104,7 +100,7 @@
 													<i class="fas fa-edit"></i>
 												</button>
 												<button
-													class="btn btn-sm btn-danger delete_airline"
+													class="btn btn-sm btn-danger delete_airport"
 													data-id="<?php echo $row['id'] ?>"
 													title="Delete">
 													<i class="fas fa-trash-alt"></i>
@@ -164,6 +160,11 @@
 			}]
 		});
 
+		// Refresh button functionality
+		$('#refresh-table').click(function() {
+			location.reload();
+		});
+
 		// Reset form function
 		function _reset() {
 			$('#manage-airports')[0].reset();
@@ -171,11 +172,16 @@
 		}
 
 		// Form submission
+		// Form submission
 		$('#manage-airports').on('submit', function(e) {
 			e.preventDefault();
 
 			// Validate form
 			if (!validateForm()) return;
+
+
+			// Prepare data to send
+			var formData = new FormData(this);
 
 			Swal.fire({
 				title: 'Processing...',
@@ -188,7 +194,7 @@
 			$.ajax({
 				url: 'ajax.php?action=save_airports',
 				method: 'POST',
-				data: new FormData(this),
+				data: formData,
 				processData: false,
 				contentType: false,
 				success: function(resp) {
@@ -214,23 +220,24 @@
 		});
 
 		// Edit airport
-		$('.edit_airline').click(function() {
+		$(document).on('click', '.edit_airport', function() {
 			var cat = $('#manage-airports');
 			cat.get(0).reset();
 			cat.find("[name='id']").val($(this).data('id'));
 			cat.find("[name='airport']").val($(this).data('airport'));
 			cat.find("[name='location']").val($(this).data('location'));
+
 		});
 
 		// Delete airport
-		$('.delete_airline').click(function() {
+		$(document).on('click', '.delete_airport', function() {
 			var id = $(this).data('id');
 			Swal.fire({
 				title: 'Are you sure?',
 				text: "You won't be able to revert this!",
 				icon: 'warning',
 				showCancelButton: true,
-				confirmButtonColor: '#3085d6',
+				confirmButtonColor: '#3085 d6',
 				cancelButtonColor: '#d33',
 				confirmButtonText: 'Yes, delete it!'
 			}).then((result) => {

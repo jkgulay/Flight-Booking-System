@@ -1,45 +1,34 @@
 <?php
 include 'db_connect.php';
 
-// Get total users
-$user_count_query = "SELECT COUNT(*) AS total_users FROM users";
-$user_count_result = $conn->query($user_count_query);
-$user_count = $user_count_result->fetch_assoc()['total_users'];
-
-// Get total booked flights
-$booked_flights_query = "SELECT COUNT(*) AS total_booked FROM booked_flight";
-$booked_flights_result = $conn->query($booked_flights_query);
-$booked_flights = $booked_flights_result->fetch_assoc()['total_booked'];
-
-// Get total available flights
-$available_flights_query = "SELECT COUNT(*) AS total_available FROM flight_list WHERE seats > 0";
-$available_flights_result = $conn->query($available_flights_query);
-$available_flights = $available_flights_result->fetch_assoc()['total_available'];
-
-// Get distinct flight dates
-$flight_dates_query = "SELECT DISTINCT DATE(departure_datetime) AS flight_date FROM flight_list";
-$flight_dates_result = $conn->query($flight_dates_query);
-$flight_dates = [];
-while ($row = $flight_dates_result->fetch_assoc()) {
-    $flight_dates[] = $row['flight_date'];
+$flights_query = "SELECT flight_id, airlines, departure_airport, arrival_airport, departure_datetime, arrival_datetime, price, seats FROM flight_details WHERE seats > 0 ORDER BY departure_datetime ASC";
+$flights_result = $conn->query($flights_query);
+$flights = [];
+while ($row = $flights_result->fetch_assoc()) {
+    $flights[] = $row;
 }
-
-$flight_id = 1;
-$booking_count_query = "SELECT get_booking_count_by_flight($flight_id) AS total_bookings";
-$booking_count_result = $conn->query($booking_count_query);
-$total_bookings = $booking_count_result->fetch_assoc()['total_bookings'];
 ?>
+
+
 
 <style>
     body {
         background-color: #f8f9fa;
         margin: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
     }
 
     .card {
         border: none;
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
     }
 
     .card-header {
@@ -47,11 +36,35 @@ $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'];
         color: white;
         border-top-left-radius: 10px;
         border-top-right-radius: 10px;
+        padding: 10px;
     }
 
     .welcome-message {
-        font-size: 1.5rem;
-        font-weight: 500;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .table {
+        width: 100%;
+        margin-bottom: 1rem;
+        border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #ddd;
+    }
+
+    .table th {
+        background-color: #3E5879;
+        color: white;
+    }
+
+    .table tr:hover {
+        background-color: #f1f1f1;
     }
 
     .footer {
@@ -61,118 +74,77 @@ $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'];
         color: #6c757d;
         padding: 10px 0;
         background-color: #f1f1f1;
-        position: relative;
-        bottom: 0;
-        width: 100%;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
     }
 </style>
 
-<body>
-    <div class="container-fluid pt-3">
-        <h1 class="text-center mb-4">Welcome to the Flight Booking System</h1>
 
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-header text-white">
-                        <h5 class="mb-0">User Dashboard</h5>
-                    </div>
+<div class="container">
+    <div class="welcome-section text-center">
+        <h1 class="welcome-message">Welcome to the Flight Booking System</h1>
+        <p>Your gateway to seamless flight bookings and travel experiences.</p>
+    </div>
 
-                    <div class="card-body">
-                        <div class="row mt-4">
-                            <div class="col-md-4">
-                                <div class="card text-white bg-primary mb-3">
-                                    <div class="card-header">Total Users</div>
-                                    <div class="card-body">
-                                        <h5 class="card-title"><?php echo $user_count; ?></h5>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card text-white bg-success mb-3">
-                                    <div class="card-header">Booked Flights</div>
-                                    <div class="card-body">
-                                        <h5 class="card-title"><?php echo $booked_flights; ?></h5>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card text-white bg-warning mb-3">
-                                    <div class="card-header">Available Flights</div>
-                                    <div class="card-body">
-                                        <h5 class="card-title"><?php echo $available_flights; ?></h5>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card mt-4">
-                        <div class="card-header text-white" style="background-color: #213555;">
-                            <h5 class="mb-0">Upcoming Flight Dates</h5>
-                        </div
-                            <div class="card-body">
-                        <?php if (!empty($flight_dates)): ?>
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Available Flights</h5>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($flights)): ?>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Flight Number</th>
+                                        <th>Airlines</th>
+                                        <th>Origin</th>
+                                        <th>Destination</th>
+                                        <th>Departure</th>
+                                        <th>Arrival</th>
+                                        <th>Available Seats</th>
+                                        <th>Price</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($flights as $flight): ?>
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Day of Week</th>
-                                            <th>Total Flights</th>
-                                            <th>Available Seats</th>
-                                            <th>Booked Seats</th>
+                                            <td><?php echo htmlspecialchars($flight['flight_id']); ?></td>
+                                            <td><?php echo htmlspecialchars($flight['airlines']); ?></td>
+                                            <td><?php echo htmlspecialchars($flight['departure_airport']); ?></td>
+                                            <td><?php echo htmlspecialchars($flight['arrival_airport']); ?></td>
+                                            <td><?php echo date('Y-m-d H:i', strtotime($flight['departure_datetime'])); ?></td>
+                                            <td><?php echo date('Y-m-d H:i', strtotime($flight['arrival_datetime'])); ?></td>
+                                            <td><?php echo $flight['seats']; ?></td>
+                                            <td><?php echo number_format($flight['price'], 2); ?></td>
+                                            <td><a href="book_flight.php?flight_id=<?php echo $flight['flight_id']; ?>" class="btn btn-primary btn-sm"><i class="fas fa-plane"></i> Book Now</a></td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        foreach ($flight_dates as $date):
-                                            $flight_details_query = "
-                            SELECT 
-                                COUNT(*) as total_flights,
-                                SUM(seats) as total_seats
-                            FROM flight_list 
-                            WHERE DATE(departure_datetime) = '$date'
-                        ";
-                                            $flight_details_result = $conn->query($flight_details_query);
-                                            $flight_details = $flight_details_result->fetch_assoc();
-
-                                            $booking_count_query = "
-                            SELECT SUM(get_booking_count_by_flight(id)) AS total_bookings
-                            FROM flight_list
-                            WHERE DATE(departure_datetime) = '$date'
-                        ";
-                                            $booking_count_result = $conn->query($booking_count_query);
-                                            $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'] ?? 0; 
-                                        ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($date); ?></td>
-                                                <td><?php echo date('l', strtotime($date)); ?></td>
-                                                <td><?php echo $flight_details['total_flights']; ?></td>
-                                                <td><?php echo $flight_details['total_seats']; ?></td>
-                                                <td><?php echo $total_bookings; ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php else: ?>
-                            <div class="alert alert-info">
-                                No upcoming flights scheduled.
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-info">
+                            No flights available at the moment. Please check back later.
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
-    </div>
+</div>
 
-    <!-- Footer -->
-    <div class="footer mt-4">
-        <p class="text-center text-muted">&copy; 2024 Flight Booking System. All rights reserved.</p>
-    </div>
-
-    <script src="assets/vendor/jquery/jquery.min.js"></script>
-    <script src="assets/vendor/bootstrap/js/bootstrap.js"></script>
-</body>
+<div class="footer">
+    <p>&copy; 2023 Flight Booking System. All rights reserved.</p>
+</div>

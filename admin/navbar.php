@@ -5,6 +5,8 @@
 	<div class="sidebar-list">
 
 		<a href="index.php?page=home" class="nav-item nav-home"><span class='icon-field'><i class="fa fa-home"></i></span> Home</a>
+		<a href="index.php?page=admin_panel" class="nav-item nav-admin_panel"><span class='icon-field'><i class="fa Example of user-md fa-user-md"></i></span> Admin Panel</a>
+
 		<a href="index.php?page=booked" class="nav-item nav-booked"><span class='icon-field'><i class="fa fa-book"></i></span> Booked</a>
 		<a href="index.php?page=flights" class="nav-item nav-flights"><span class='icon-field'><i class="fa fa-plane-departure"></i></span> Flights</a>
 		<a href="index.php?page=airport" class="nav-item nav-airport"><span class='icon-field'><i class="fa fa-map-marked-alt"></i></span> Airport</a>

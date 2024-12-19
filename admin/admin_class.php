@@ -245,17 +245,24 @@ class Action
         }
         return json_encode(['status' => 'error', 'message' => 'Deletion failed or no ID provided']);
     }
-    // Save airport
+
     function save_airports()
     {
         extract($_POST);
+
         $data = "airport = '$airport', location = '$location'";
 
-        $stmt = $this->db->prepare("INSERT INTO airport_list SET $data ON DUPLICATE KEY UPDATE $data");
+        if (!empty($id)) {
+            $stmt = $this->db->prepare("UPDATE airport_list SET $data WHERE id = ?");
+            $stmt->bind_param("i", $id);
+        } else {
+            $stmt = $this->db->prepare("INSERT INTO airport_list SET $data");
+        }
+
         $stmt->execute();
 
         if ($stmt->affected_rows > 0) {
-            return 1;
+            return !empty($id) ? 2 : 1; 
         }
         return 0;
     }

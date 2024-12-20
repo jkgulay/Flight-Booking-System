@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 19, 2024 at 11:33 PM
+-- Generation Time: Dec 21, 2024 at 12:05 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -25,9 +25,28 @@ DELIMITER $$
 --
 -- Procedures
 --
-CREATE DEFINER=`` PROCEDURE `log_booking_activity` (IN `user_id` BIGINT, IN `action_type` VARCHAR(10), IN `table_name` VARCHAR(50), IN `affected_columns` TEXT, IN `details` TEXT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `log_booking_activity` (IN `user_id` BIGINT, IN `action_type` VARCHAR(10), IN `table_name` VARCHAR(50), IN `affected_columns` TEXT, IN `details` TEXT)   BEGIN
     INSERT INTO logs (user_id, action_type, timestamp, table_name, affected_columns, details)
     VALUES (user_id, action_type, NOW(), table_name, affected_columns, details);
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `refresh_airline_booking_summary` ()   BEGIN
+    TRUNCATE TABLE airline_booking_summary_materialized;
+
+    INSERT INTO airline_booking_summary_materialized (airlines, total_bookings)
+    SELECT 
+        a.airlines,
+        COUNT(b.id) AS total_bookings
+    FROM 
+        booked_flight b
+    JOIN 
+        flight_list f ON b.flight_id = f.id
+    JOIN 
+        airlines_list a ON f.airline_id = a.id
+    GROUP BY 
+        a.airlines
+    ORDER BY 
+        total_bookings DESC;
 END$$
 
 --
@@ -72,27 +91,27 @@ INSERT INTO `airlines_list` (`id`, `airlines`, `logo_path`) VALUES
 (2, 'Philippine Airlines', '1600999200_Philippine-Airlines-Logo.jpg'),
 (3, 'Cebu Pacific', '1600999200_43cada0008538e3c1a1f4675e5a7aabe.jpeg'),
 (5, 'Cebu Mactan', '1734635640_5-removebg-preview.png'),
-(14, 'Ilo-ilo', '1734637680_1.png');
+(14, 'Bachelor Express', '1734637680_1.png');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `airline_booking_summary`
+-- Table structure for table `airline_booking_summary_materialized`
 --
 
-CREATE TABLE `airline_booking_summary` (
+CREATE TABLE `airline_booking_summary_materialized` (
   `airlines` varchar(255) DEFAULT NULL,
   `total_bookings` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `airline_booking_summary`
+-- Dumping data for table `airline_booking_summary_materialized`
 --
 
-INSERT INTO `airline_booking_summary` (`airlines`, `total_bookings`) VALUES
-('AirAsia', 0),
-('Cebu Pacific', 2),
-('Philippine Airlines', 0);
+INSERT INTO `airline_booking_summary_materialized` (`airlines`, `total_bookings`) VALUES
+('Cebu Pacific', 5),
+('AirAsia', 2),
+('Philippine Airlines', 1);
 
 -- --------------------------------------------------------
 
@@ -117,7 +136,7 @@ INSERT INTO `airport_list` (`id`, `airport`, `location`) VALUES
 (4, 'Dubai International Airport', 'Garhoud, Dubai'),
 (5, 'Mactan-Cebu Airport', 'Cebu'),
 (6, 'Bancasi Airport', 'Butuan City'),
-(17, 'we', 'wew');
+(17, 'Poppins', 'Alice');
 
 -- --------------------------------------------------------
 
@@ -127,6 +146,7 @@ INSERT INTO `airport_list` (`id`, `airport`, `location`) VALUES
 
 CREATE TABLE `booked_flight` (
   `id` bigint(30) NOT NULL,
+  `user_id` bigint(30) NOT NULL,
   `flight_id` bigint(30) NOT NULL,
   `name` text NOT NULL,
   `address` text NOT NULL,
@@ -138,9 +158,15 @@ CREATE TABLE `booked_flight` (
 -- Dumping data for table `booked_flight`
 --
 
-INSERT INTO `booked_flight` (`id`, `flight_id`, `name`, `address`, `contact`, `status`) VALUES
-(2, 3, 'James Smith', 'Sample Address', '+4545 6456', 'pending'),
-(3, 4, 'John Smith', 'Sample Address', '+18456-5455-55', 'pending');
+INSERT INTO `booked_flight` (`id`, `user_id`, `flight_id`, `name`, `address`, `contact`, `status`) VALUES
+(4, 17, 3, 'Jun Kyle Armecin Gulay', 'p-5,poblacion 7, buenavista adn.', '231141', 'accepted'),
+(5, 0, 3, 'Jun Kyle Armecin Gulay', 'p-5,poblacion 7, buenavista adn.', '231141', 'accepted'),
+(6, 0, 22, 'Admin', 'Butuan City', '231141', 'accepted'),
+(9, 0, 3, 'Jun Kyle Armecin Gulay', 'p-5,poblacion 7, buenavista adn.', '23', 'accepted'),
+(10, 0, 18, 'Jun Kyle Armecin Gulay', 'p-5,poblacion 7, buenavista adn.', '23', 'accepted'),
+(11, 17, 3, 'Jun Kyle Armecin Gulay', 'p-5,poblacion 7, buenavista adn.', '23', 'accepted'),
+(12, 17, 3, 'Gummy Worms', 'Butuan City', '09100290521', 'accepted'),
+(13, 17, 22, 'Gummy Worms', 'Butuan City', '09100290521', 'accepted');
 
 -- --------------------------------------------------------
 
@@ -198,12 +224,10 @@ CREATE TABLE `flight_list` (
 --
 
 INSERT INTO `flight_list` (`id`, `airline_id`, `plane_no`, `departure_airport_id`, `arrival_airport_id`, `departure_datetime`, `arrival_datetime`, `seats`, `price`, `date_created`) VALUES
-(1, 1, 'GB623-14', 1, 3, '2020-10-07 04:00:00', '2020-10-21 10:00:00', 150, 7500.00, '2020-09-25 11:23:52'),
-(2, 2, 'TIPS14-15', 1, 2, '2020-10-14 11:00:00', '2020-10-16 09:00:00', 100, 5000.00, '2020-09-25 11:46:12'),
 (3, 3, 'CEB-1101', 5, 1, '2020-09-30 08:00:00', '2020-09-30 08:45:00', 100, 2500.00, '2020-09-25 11:57:31'),
-(4, 3, 'CEB10023', 1, 5, '2020-10-07 01:00:00', '2020-10-07 01:45:00', 100, 2500.00, '2020-09-25 14:50:47'),
-(5, 3, 'wwew', 4, 4, '2024-12-06 08:00:00', '2024-12-03 09:00:00', 2, 232.00, '2024-12-18 23:28:04'),
-(6, 3, 'wwew', 4, 4, '2024-12-06 08:00:00', '2024-12-03 09:00:00', 2, 232.00, '2024-12-19 01:56:01');
+(18, 2, '2', 2, 6, '2024-12-20 08:25:00', '2024-12-21 08:25:00', 1, 2.00, '2024-12-20 00:25:29'),
+(22, 1, 'w2', 1, 6, '2024-12-27 00:04:00', '2024-12-27 11:03:00', 1, 1.00, '2024-12-20 01:01:32'),
+(24, 14, '221', 3, 6, '2024-12-21 09:08:00', '2024-12-22 09:08:00', 1, 1.00, '2024-12-20 01:08:48');
 
 -- --------------------------------------------------------
 
@@ -228,7 +252,10 @@ CREATE TABLE `logs` (
 INSERT INTO `logs` (`id`, `user_id`, `action_type`, `timestamp`, `table_name`, `affected_columns`, `details`) VALUES
 (1, 25, 'INSERT', '2024-12-20 05:24:09', 'users', 'ALL', 'New user added'),
 (3, 25, 'UPDATE', '2024-12-20 05:27:37', 'users', 'Updated columns', 'User details updated'),
-(8, 16, 'UPDATE', '2024-12-20 06:32:36', 'users', 'Updated columns', 'User details updated');
+(8, 16, 'UPDATE', '2024-12-20 06:32:36', 'users', 'Updated columns', 'User details updated'),
+(11, 9, 'UPDATE', '2024-12-20 08:57:23', 'users', 'Updated columns', 'User details updated'),
+(12, 40, 'INSERT', '2024-12-21 02:50:10', 'users', 'ALL', 'New user added'),
+(13, 40, 'UPDATE', '2024-12-21 04:51:02', 'users', 'Updated columns', 'User  details updated');
 
 -- --------------------------------------------------------
 
@@ -274,13 +301,14 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `user_id`, `name`, `address`, `contact`, `username`, `password`, `type`) VALUES
-(9, 2, 'DR.James Smith, M.D.', 'Sample Clinic Address', '+1456 554 55623', 'jsmith@sample.com', 'jsmith123', 2),
+(9, 2, 'DR.James Smith, M.D.', 'Sample Clinic Address', '+1456 554 55623', 'jsmith@sample.com', 'jsmith123', 3),
 (10, 3, 'DR.Claire Blake, M.D.', 'Sample Only', '+5465 555 623', 'cblake@sample.com', 'blake123', 2),
 (15, 9, 'DR.Sample Doctor, M.D.', 'Buenavista', '+1235 456 623', 'sample2@sample.com', 'sample123', 2),
 (16, 0, 'Jun Kyle Gulay', 'Butuan City', '09100290521', 'junkyle.gulay', '$2y$10$0v1WXe.ILfW7n8IxKwg97.gVai/1htOiWCdZe3029lmp9CAk14zSO', 3),
 (17, 0, 'Gummy Worms', 'p-5,poblacion 7, buenavista adn.', '09876543211', 'katzukii21', '$2y$10$soSSUffvO3pYKD.q0Rjp9eTJ6UGMSqiYAH2lfcst2loUEbWbdNl7a', 3),
 (18, 0, 'Admin', 'Butuan City', '09100290521', 'admin', '$2y$10$EeMbofo.QX1UZSaRQIlvd.rESdVKoSNOIZ9GDVL1DA52aUBoc2q2i', 1),
-(25, 0, 'Aldwin', 'Test Address', '1234567890', 'testuser', 'password123', 3);
+(25, 0, 'Aldwin', 'Test Address', '1234567890', 'testuser', 'password123', 3),
+(40, 0, 'Jun Kyle Gulay', 'Butuan City', '09100290521', 'kayel2002', '$2y$10$GIEhpWbRJ7OR8Js/TefNMuOTXdE9WIWBQNF/5Oz5naYEhvSUhSzMK', 2);
 
 --
 -- Triggers `users`
@@ -293,7 +321,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `after_user_update` AFTER UPDATE ON `users` FOR EACH ROW BEGIN
-    CALL log_booking_activity(NEW.id, 'UPDATE', 'users', 'Updated columns', 'User details updated');
+    CALL log_booking_activity(NEW.id, 'UPDATE', 'users', 'Updated columns', 'User  details updated');
 END
 $$
 DELIMITER ;
@@ -396,19 +424,19 @@ ALTER TABLE `airport_list`
 -- AUTO_INCREMENT for table `booked_flight`
 --
 ALTER TABLE `booked_flight`
-  MODIFY `id` bigint(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `flight_list`
 --
 ALTER TABLE `flight_list`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `logs`
 --
 ALTER TABLE `logs`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `system_settings`
@@ -420,7 +448,7 @@ ALTER TABLE `system_settings`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` bigint(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- Constraints for dumped tables
@@ -439,9 +467,15 @@ ALTER TABLE `flight_list`
 --
 ALTER TABLE `logs`
   ADD CONSTRAINT `logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-COMMIT;
 
-ALTER TABLE booked_flight ADD user_id BIGINT(30) NOT NULL AFTER id;
+DELIMITER $$
+--
+-- Events
+--
+CREATE DEFINER=`root`@`localhost` EVENT `refresh_airline_booking_summary_event` ON SCHEDULE EVERY 5 HOUR STARTS '2024-12-21 06:44:23' ON COMPLETION NOT PRESERVE ENABLE DO CALL refresh_airline_booking_summary()$$
+
+DELIMITER ;
+COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

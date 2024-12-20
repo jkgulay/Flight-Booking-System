@@ -1,7 +1,7 @@
 <?php
 include('db_connect.php');
 
-// Updated query
+// booked_flight index
 $qry = $conn->query("
     SELECT b.*, 
            f.flight_id, 

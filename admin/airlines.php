@@ -1,4 +1,8 @@
-<?php include('db_connect.php'); ?>
+<?php include('db_connect.php'); 
+//materialized view 
+$booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_booking_summary_materialized ORDER BY airlines ASC");
+
+?>
 
 <div class="container-fluid pt-3">
     <div class="row">
@@ -130,6 +134,40 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <!-- Booking Summary Panel -->
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar mr-2"></i>Airline Booking Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="bookingSummaryTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Airline Name</th>
+                                    <th class="text-center">Total Bookings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_booking_summary_materialized ORDER BY airlines ASC");
+                                while ($row = $booking_summary->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($row['airlines']); ?></td>
+                                        <td class="text-center"><?php echo htmlspecialchars($row['total_bookings']); ?></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -169,18 +207,21 @@
             }]
         });
 
-
-        $(document).ready(function() {
-            $('#refresh-table').click(function() {
-                location.reload(); 
-            });
+        $('#bookingSummaryTable').DataTable({
+            responsive: true,
+            language: {
+                searchPlaceholder: "Search booking summary...",
+                lengthMenu: "Show _MENU_ entries"
+            }
         });
 
+        $('#refresh-table').click(function() {
+            location.reload();
+        });
 
         $(".custom-file-input").on("change", function() {
             var fileName = $(this).val().split("\\").pop();
             $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
-
             displayImg(this);
         });
 
@@ -190,11 +231,7 @@
             $('#cimg').attr('src', '').hide();
             $('.custom-file-label').html('Choose file');
         }
-
-
     });
-
-
 
     function displayImg(input) {
         if (input.files && input.files[0]) {

@@ -1,6 +1,12 @@
 <?php
 include 'db_connect.php';
+$user_id = isset($_SESSION['login_id']) ? $_SESSION['login_id'] : null;
+if ($user_id === null) {
+    header("Location: login.php");
+    exit();
+}
 
+//flight_details view
 $flights_query = "SELECT flight_id, airlines, departure_airport, arrival_airport, departure_datetime, arrival_datetime, price, seats FROM flight_details WHERE seats > 0 ORDER BY departure_datetime ASC";
 $flights_result = $conn->query($flights_query);
 $flights = [];
@@ -12,7 +18,6 @@ if ($flights_result) {
     echo "Error fetching flights: " . $conn->error;
 }
 
-// Fetch booked flights
 $booked_flights_query = "
     SELECT b.id AS booking_id, 
            f.flight_id, 
@@ -29,6 +34,7 @@ $booked_flights_query = "
     ORDER BY b.id DESC
 ";
 
+//booked_flight_summary view
 $booked_flights_result = $conn->query($booked_flights_query);
 $booked_flights = [];
 if ($booked_flights_result) {
@@ -121,7 +127,49 @@ if ($booked_flights_result) {
         <h1 class="welcome-message">Welcome to the Flight Booking System</h1>
         <p>Your gateway to seamless flight bookings and travel experiences.</p>
     </div>
-
+    <div class="row mt-5">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Your Booked Flights</h5>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($booked_flights)): ?>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Flight Number</th>
+                                        <th>Airlines</th>
+                                        <th>Origin</th>
+                                        <th>Destination</th>
+                                        <th>Departure</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($booked_flights as $flight): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($flight['flight_id']); ?></td>
+                                            <td><?php echo htmlspecialchars($flight['airlines']); ?></td>
+                                            <td><?php echo htmlspecialchars($flight['departure_airport']); ?></td>
+                                            <td><?php echo htmlspecialchars($flight['arrival_airport']); ?></td>
+                                            <td><?php echo date('Y-m-d H:i', strtotime($flight['departure_datetime'])); ?></td>
+                                            <td><?php echo ucfirst($flight['status']); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-info">
+                            You have not booked any flights yet.
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-lg-12">
             <div class="card">
@@ -175,52 +223,8 @@ if ($booked_flights_result) {
             </div>
         </div>
     </div>
-    <div class="row mt-5">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Your Booked Flights</h5>
-                </div>
-                <div class="card-body">
-                    <?php if (!empty($booked_flights)): ?>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Flight Number</th>
-                                        <th>Airlines</th>
-                                        <th>Origin</th>
-                                        <th>Destination</th>
-                                        <th>Departure</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($booked_flights as $flight): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($flight['flight_id']); ?></td>
-                                            <td><?php echo htmlspecialchars($flight['airlines']); ?></td>
-                                            <td><?php echo htmlspecialchars($flight['departure_airport']); ?></td>
-                                            <td><?php echo htmlspecialchars($flight['arrival_airport']); ?></td>
-                                            <td><?php echo date('Y-m-d H:i', strtotime($flight['departure_datetime'])); ?></td>
-                                            <td><?php echo ucfirst($flight['status']); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php else: ?>
-                        <div class="alert alert-info">
-                            You have not booked any flights yet.
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="footer">
     <p>&copy; 2023 Flight Booking System. All rights reserved.</p>
 </div>
-

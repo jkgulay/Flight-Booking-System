@@ -164,29 +164,28 @@
 		});
 
 		$('.login-form').submit(function(e) {
-			e.preventDefault();
+			e.preventDefault(); // Prevent the default form submission
 			const $button = $(this).find('button[type="submit"]');
-			$button.attr('disabled', true).text('Logging in...');
+			$button.attr('disabled', true).text('Logging in...'); // Disable the button and change text
 
 			$.ajax({
-				url: 'ajax.php?action=login',
-				method: 'POST',
-				data: $(this).serialize(),
+				url: 'ajax.php?action=login', // URL to send the request to
+				method: 'POST', // HTTP method
+				data: $(this).serialize(), // Serialize form data
 				error: function(err) {
-					console.log(err);
-					$button.removeAttr('disabled').text('Sign in');
-					// Optionally show an error message to the user
+					console.log(err); // Log any errors
+					$button.removeAttr('disabled').text('Sign in'); // Re-enable the button
 					$('.login-form').prepend('<div class="alert alert-danger">An error occurred. Please try again.</div>');
 				},
 				success: function(resp) {
 					if (resp == 1) {
-						location.href = 'index.php?page=home';
+						location.href = 'index.php?page=home'; // Redirect on successful login
 					} else if (resp == 2) {
 						$('.login-form').prepend('<div class="alert alert-danger">Username not found.</div>');
-						$button.removeAttr('disabled').text('Sign in');
+						$button.removeAttr('disabled').text('Sign in'); // Re-enable the button
 					} else if (resp == 3) {
 						$('.login-form').prepend('<div class="alert alert-danger">Username or password is incorrect.</div>');
-						$button.removeAttr('disabled').text('Sign in');
+						$button.removeAttr('disabled').text('Sign in'); // Re-enable the button
 					}
 				}
 			});
@@ -194,7 +193,7 @@
 
 		$('.register-form').submit(function(e) {
 			e.preventDefault();
-			const $button = $(this).find('button[type="submit"]'); 
+			const $button = $(this).find('button[type="submit"]');
 			$button.attr('disabled', true).text('Creating...');
 
 			$.ajax({

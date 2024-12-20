@@ -1,5 +1,8 @@
 <?php include('db_connect.php'); ?>
 
+<!--SHOW INDEX FROM airport_list;-->
+<!--idx_flight_airport-->
+<!-- EXPLAIN SELECT * FROM airport_list WHERE location = 'Metro Manila'; -->
 <div class="container-fluid pt-3">
 	<div class="row">
 		<!-- Form Panel -->

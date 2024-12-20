@@ -22,7 +22,11 @@
   include('./header.php');
   include('./db_connect.php');
 
-  $user_id = $_SESSION['user_id']; 
+  $user_id = $_SESSION['login_id'];
+  $user_type = $_SESSION['type'];
+  $login_name = $_SESSION['name'];
+
+
   ?>
 
   <style>

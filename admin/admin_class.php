@@ -24,17 +24,27 @@ class Action
 
     function login()
     {
+        // Extract POST variables
         extract($_POST);
 
-        session_unset(); 
+        // Clear previous session data
+        session_unset();
 
+        // Prepare the SQL statement to prevent SQL injection
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
 
+        // Check if the user exists
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
+
+            // Store user type and ID in session
+            $_SESSION['type'] = $user['type']; 
+            $_SESSION['login_id'] = $user['id'];
+            $_SESSION['login_name'] = $user['name'];
+
 
             if (password_verify($password, $user['password'])) {
                 foreach ($user as $key => $value) {
@@ -315,24 +325,24 @@ class Action
         extract($_POST);
         $success = true;
         $messages = [];
-    
+
         // Prepare the SQL statement once
         $stmt = $this->db->prepare("INSERT INTO booked_flight (flight_id, name, address, contact) VALUES (?, ?, ?, ?)");
-    
+
         foreach ($name as $k => $value) {
             // Bind parameters for each booking
             $stmt->bind_param("isss", $flight_id, $name[$k], $address[$k], $contact[$k]);
-            
+
             // Execute the statement
             if (!$stmt->execute()) {
                 $success = false;
                 $messages[] = "Failed to book flight for " . htmlspecialchars($name[$k]) . ": " . $stmt->error;
             }
         }
-    
+
         // Close the statement
         $stmt->close();
-    
+
         if ($success) {
             echo json_encode(['status' => 'success', 'message' => 'Flight successfully booked.']);
         } else {
@@ -343,13 +353,13 @@ class Action
     function update_booked()
     {
         extract($_POST);
-        
+
         // Prepare the SQL statement
         $stmt = $this->db->prepare("UPDATE booked_flight SET name = ?, address = ?, contact = ? WHERE id = ?");
-        
+
         // Bind parameters
         $stmt->bind_param("sssi", $name, $address, $contact, $id);
-        
+
         // Execute the statement
         if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
@@ -360,7 +370,7 @@ class Action
         } else {
             return json_encode(['status' => 'error', 'message' => 'Failed to update booking: ' . $stmt->error]);
         }
-        
+
         // Close the statement
         $stmt->close();
     }

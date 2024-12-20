@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $id = intval($_POST['id']); // Ensure ID is an integer
+    $id = intval($_POST['id']); 
     $action = $_POST['action'];
 
     if ($action === 'approve') {

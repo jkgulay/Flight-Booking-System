@@ -134,7 +134,7 @@
 							<input type="contact" placeholder="Contact Number *" name="contact" required />
 							<input type="address" placeholder="Address *" name="address" required />
 							<input type="password" placeholder="Password *" name="password" required />
-							<button type="signup" class="btn">Create</button>
+							<button type="submit" class="btn">Create</button>
 							<p class="message">Already registered? <a href="#">Sign In</a></p>
 						</form>
 						<form class="login-form" method="POST">
@@ -175,41 +175,54 @@
 				error: function(err) {
 					console.log(err);
 					$button.removeAttr('disabled').text('Sign in');
+					// Optionally show an error message to the user
+					$('.login-form').prepend('<div class="alert alert-danger">An error occurred. Please try again.</div>');
 				},
 				success: function(resp) {
 					if (resp == 1) {
 						location.href = 'index.php?page=home';
-					} else {
+					} else if (resp == 2) {
+						$('.login-form').prepend('<div class="alert alert-danger">Username not found.</div>');
+						$button.removeAttr('disabled').text('Sign in');
+					} else if (resp == 3) {
 						$('.login-form').prepend('<div class="alert alert-danger">Username or password is incorrect.</div>');
 						$button.removeAttr('disabled').text('Sign in');
 					}
 				}
 			});
-			location.reload();
 		});
 
 		$('.register-form').submit(function(e) {
-			e.preventDefault(); 
-			const $button = $(this).find('button[type="signup"]');
+			e.preventDefault();
+			const $button = $(this).find('button[type="submit"]'); 
 			$button.attr('disabled', true).text('Creating...');
 
 			$.ajax({
-				url: 'ajax.php?action=signup', 
+				url: 'ajax.php?action=signup',
 				method: 'POST',
-				data: $(this).serialize(), 
+				data: $(this).serialize(),
 				error: function(err) {
-					console.log(err); 
-					$button.removeAttr('disabled').text('Create'); 
+					console.log(err);
+					$button.removeAttr('disabled').text('Create');
+					$('.register-form').prepend('<div class="alert alert-danger">An error occurred. Please try again.</div>');
 				},
 				success: function(resp) {
-					const response = JSON.parse(resp); 
+					let response;
+					try {
+						response = typeof resp === 'string' ? JSON.parse(resp) : resp;
+					} catch (e) {
+						console.error('Failed to parse response:', e);
+						$button.removeAttr('disabled').text('Create');
+						return;
+					}
+
 					if (response.status === 'success') {
-						alert('Registration successful! You can now log in.'); 
-						$('.register-form').hide(); 
-						$('.login-form').show(); 
+						alert('Registration successful! You can now log in.');
+						$('.register-form').hide();
+						$('.login-form').show();
 					} else {
 						$('.register-form').prepend('<div class="alert alert-danger">' + response.message + '</div>');
-						$button.removeAttr('disabled').text('Create'); 
+						$button.removeAttr('disabled').text('Create');
 					}
 				}
 			});

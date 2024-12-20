@@ -26,7 +26,8 @@ class Action
     {
         extract($_POST);
 
-        // Prepare the SQL statement to prevent SQL injection
+        session_unset(); 
+
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
@@ -41,12 +42,12 @@ class Action
                         $_SESSION['login_' . $key] = $value;
                     }
                 }
-                return 1;
+                return 1; // Successful login
             } else {
-                return 3;
+                return 3; // Incorrect password
             }
         } else {
-            return 2;
+            return 2; // User not found
         }
     }
 
@@ -129,7 +130,6 @@ class Action
     {
         extract($_POST);
 
-        // Check if the username already exists
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
@@ -139,7 +139,6 @@ class Action
             return json_encode(['status' => 'error', 'message' => 'Username already exists']);
         }
 
-        // Hash the password
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         $stmt = $this->db->prepare("INSERT INTO users (name, contact, address, username, password, type) VALUES (?, ?, ?, ?, ?, 3)");
@@ -314,39 +313,55 @@ class Action
     function book_flight()
     {
         extract($_POST);
-        $success = true; 
-
+        $success = true;
+        $messages = [];
+    
+        // Prepare the SQL statement once
+        $stmt = $this->db->prepare("INSERT INTO booked_flight (flight_id, name, address, contact) VALUES (?, ?, ?, ?)");
+    
         foreach ($name as $k => $value) {
-            $data = "flight_id = $flight_id, name = ?, address = ?, contact = ?";
-            $stmt = $this->db->prepare("INSERT INTO booked_flight SET $data");
-            $stmt->bind_param("sss", $name[$k], $address[$k], $contact[$k]);
-            $stmt->execute();
-
-            if ($stmt->affected_rows <= 0) {
-                $success = false; 
-                break; 
+            // Bind parameters for each booking
+            $stmt->bind_param("isss", $flight_id, $name[$k], $address[$k], $contact[$k]);
+            
+            // Execute the statement
+            if (!$stmt->execute()) {
+                $success = false;
+                $messages[] = "Failed to book flight for " . htmlspecialchars($name[$k]) . ": " . $stmt->error;
             }
         }
-
+    
+        // Close the statement
+        $stmt->close();
+    
         if ($success) {
             echo json_encode(['status' => 'success', 'message' => 'Flight successfully booked.']);
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to book flight.']);
+            echo json_encode(['status' => 'error', 'message' => implode(", ", $messages)]);
         }
     }
 
-    // Update booked flight
     function update_booked()
     {
         extract($_POST);
-        $data = "name = ?, address = ?, contact = ?";
-        $stmt = $this->db->prepare("UPDATE booked_flight SET $data WHERE id = ?");
+        
+        // Prepare the SQL statement
+        $stmt = $this->db->prepare("UPDATE booked_flight SET name = ?, address = ?, contact = ? WHERE id = ?");
+        
+        // Bind parameters
         $stmt->bind_param("sssi", $name, $address, $contact, $id);
-        $stmt->execute();
-
-        if ($stmt->affected_rows > 0) {
-            return 1;
+        
+        // Execute the statement
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                return json_encode(['status' => 'success', 'message' => 'Booking successfully updated.']);
+            } else {
+                return json_encode(['status' => 'info', 'message' => 'No changes made to the booking.']);
+            }
+        } else {
+            return json_encode(['status' => 'error', 'message' => 'Failed to update booking: ' . $stmt->error]);
         }
-        return 0;
+        
+        // Close the statement
+        $stmt->close();
     }
 }

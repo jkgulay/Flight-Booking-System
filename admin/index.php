@@ -21,6 +21,8 @@
   }
   include('./header.php');
   include('./db_connect.php');
+
+  $user_id = $_SESSION['user_id']; 
   ?>
 
   <style>

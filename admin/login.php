@@ -163,7 +163,6 @@
 			}, "slow");
 		});
 
-		// Handle the login form submission
 		$('.login-form').submit(function(e) {
 			e.preventDefault();
 			const $button = $(this).find('button[type="submit"]');
@@ -186,6 +185,7 @@
 					}
 				}
 			});
+			location.reload();
 		});
 
 		$('.register-form').submit(function(e) {

@@ -2,25 +2,25 @@
 include('db_connect.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_GET['action']) && $_GET['action'] == 'update_booked') {
-    $id = intval($_POST['id']);
-    $name = $conn->real_escape_string($_POST['name']);
-    $contact = $conn->real_escape_string($_POST['contact']);
-    $address = $conn->real_escape_string($_POST['address']);
-    $status = $conn->real_escape_string($_POST['status']);
+	$id = intval($_POST['id']);
+	$name = $conn->real_escape_string($_POST['name']);
+	$contact = $conn->real_escape_string($_POST['contact']);
+	$address = $conn->real_escape_string($_POST['address']);
+	$status = $conn->real_escape_string($_POST['status']);
 
-    $stmt = $conn->prepare("UPDATE booked_flight SET name = ?, contact = ?, address = ? WHERE id = ?");
-    $stmt->bind_param("sssi", $name, $contact, $address, $id);
+	$stmt = $conn->prepare("UPDATE booked_flight SET name = ?, contact = ?, address = ? WHERE id = ?");
+	$stmt->bind_param("sssi", $name, $contact, $address, $id);
 
-    // Execute the statement
-    if ($stmt->execute()) {
-        echo 1; // Success
-    } else {
-        error_log("SQL Error: " . $stmt->error); // Log the error for debugging
-        echo 0; // Failure
-    }
+	// Execute the statement
+	if ($stmt->execute()) {
+		echo 1; // Success
+	} else {
+		error_log("SQL Error: " . $stmt->error); // Log the error for debugging
+		echo 0; // Failure
+	}
 
-    $stmt->close();
-    $conn->close();
+	$stmt->close();
+	$conn->close();
 }
 ?>
 
@@ -77,13 +77,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_GET['action']) && $_GET['act
 										<?php echo ucwords($row['status']) ?>
 									</span>
 								</td>
+
+
 								<td class="text-center">
-									<button class="btn btn-outline-primary btn-sm edit_booked" type="button" data-id="<?php echo $row['bid'] ?>"><i class="fa fa-edit"></i></button>
-									<button class="btn btn-outline-danger btn-sm delete_booked" type="button" data-id="<?php echo $row['bid'] ?>"><i class="fa fa-trash"></i></button>
 									<?php if ($row['status'] == 'pending'): ?>
-										<button class="btn btn-success btn-sm accept_booking" type="button" data-id="<?php echo $row['bid'] ?>"><i class="fa fa-check"></i></button>
-										<button class="btn btn-warning btn-sm decline_booking" type="button" data-id="<?php echo $row['bid'] ?>"><i class="fa fa-times"></i></button>
 									<?php endif; ?>
+									<div class="dropdown">
+										<button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
+											Actions
+										</button>
+										<div class="dropdown-menu dropdown-menu-right">
+											<a class="dropdown-item edit_user" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>">
+												<i class="fa fa-check mr-2 text-warning"></i>Accept
+											</a>
+											<a class="dropdown-item view_user" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>">
+												<i class="fa fa-check mr-2 text-info"></i>Decline
+											</a>
+											<div class="dropdown-divider"></div>
+											<a class="dropdown-item delete_user" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>">
+												<i class="fa fa-trash mr-2 text-danger"></i>Delete
+											</a>
+										</div>
+									</div>
 								</td>
 							</tr>
 						<?php endwhile; ?>
@@ -114,56 +129,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_GET['action']) && $_GET['act
 </style>
 
 <script>
-    $(document).ready(function() {
-        $('#flight-list').dataTable();
+	$(document).ready(function() {
+		$('#flight-list').dataTable();
 
-        $('#new_booked').click(function() {
-            uni_modal("New Flight", "manage_booked.php", 'mid-large');
-        });
+		$('#new_booked').click(function() {
+			uni_modal("New Flight", "manage_booked.php", 'mid-large');
+		});
 
-        $('.edit_booked').click(function() {
-            uni_modal("Edit Information", "manage_booked.php?id=" + $(this).attr('data-id'), 'mid-large');
-        });
+		$('.edit_booked').click(function() {
+			uni_modal("Edit Information", "manage_booked.php?id=" + $(this).attr('data-id'), 'mid-large');
+		});
 
-        $('.delete_booked').click(function() {
-            _conf("Are you sure to delete this data?", "delete_booked", [$(this).attr('data-id')]);
-        });
+		$('.delete_booked').click(function() {
+			_conf("Are you sure to delete this data?", "delete_booked", [$(this).attr('data-id')]);
+		});
 
-        $('.accept_booking').click(function() {
-            const id = $(this).attr('data-id');
-            _conf("Are you sure you want to accept this booking?", "accept_booking", [id]);
-        });
+		$('.accept_booking').click(function() {
+			const id = $(this).attr('data-id');
+			_conf("Are you sure you want to accept this booking?", "accept_booking", [id]);
+		});
 
-        $('.decline_booking').click(function() {
-            const id = $(this).attr('data-id');
-            _conf("Are you sure you want to decline this booking?", "decline_booking", [id]);
-        });
-    });
+		$('.decline_booking').click(function() {
+			const id = $(this).attr('data-id');
+			_conf("Are you sure you want to decline this booking?", "decline_booking", [id]);
+		});
+	});
 
-    $('#book-flight').submit(function(e) {
-        e.preventDefault();
-        start_load();
+	$('#book-flight').submit(function(e) {
+		e.preventDefault();
+		start_load();
 
-        $.ajax({
-            url: 'ajax.php?action=update_booked',
-            method: 'POST',
-            data: $(this).serialize(),
-            success: function(resp) {
-                end_load();
-                console.log('Response:', resp); // Log the response for debugging
-                if (resp == 1) {
-                    $('.modal').modal('hide');
-                    alert_toast('Booked Flight successfully updated.', 'success');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    alert_toast('An error occurred while updating the booking.', 'danger');
-                }
-            },
-            error: function(xhr, status, error) {
-                end_load();
-                console.error('Error:', status, error);
-                alert_toast('An error occurred while processing your request.', 'danger');
-            }
-        });
-    });
+		$.ajax({
+			url: 'ajax.php?action=update_booked',
+			method: 'POST',
+			data: $(this).serialize(),
+			success: function(resp) {
+				end_load();
+				console.log('Response:', resp); // Log the response for debugging
+				if (resp == 1) {
+					$('.modal').modal('hide');
+					alert_toast('Booked Flight successfully updated.', 'success');
+					setTimeout(() => location.reload(), 1500);
+				} else {
+					alert_toast('An error occurred while updating the booking.', 'danger');
+				}
+			},
+			error: function(xhr, status, error) {
+				end_load();
+				console.error('Error:', status, error);
+				alert_toast('An error occurred while processing your request.', 'danger');
+			}
+		});
+	});
 </script>

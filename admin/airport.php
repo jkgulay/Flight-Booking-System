@@ -42,10 +42,10 @@
 					<div class="card-footer">
 						<div class="row">
 							<div class="col-md-12 d-flex justify-content-between">
-								<button type="submit" class="btn btn-primary btn-sm">
+								<button type="submit" class="btn btn-outline-primary btn-sm">
 									<i class="fas fa-save mr-2"></i>Save
 								</button>
-								<button type="button" class="btn btn-secondary btn-sm" onclick="_reset()">
+								<button type="button" class="btn btn-outline-secondary btn-sm" onclick="_reset()">
 									<i class="fas fa-times mr-2"></i>Cancel
 								</button>
 							</div>
@@ -63,7 +63,7 @@
 						<i class="fas fa-list mr-2"></i>Airport List
 					</h5>
 					<div class="card-tools">
-						<button class="btn btn-success btn-sm" id="refresh-table">
+						<button class="btn btn-outline-success btn-sm" id="refresh-table">
 							<i class="fas fa-sync-alt mr-2"></i>Refresh
 						</button>
 					</div>
@@ -92,7 +92,7 @@
 										<td class="text-center">
 											<div class="btn-group" role="group">
 												<button
-													class="btn btn-sm btn-warning edit_airport"
+													class="btn btn-sm btn-outline-warning edit_airport"
 													data-id="<?php echo $row['id'] ?>"
 													data-airport="<?php echo htmlspecialchars($row['airport']) ?>"
 													data-location="<?php echo htmlspecialchars($row['location']) ?>"
@@ -100,7 +100,7 @@
 													<i class="fas fa-edit"></i>
 												</button>
 												<button
-													class="btn btn-sm btn-danger delete_airport"
+													class="btn btn-sm btn-outline-danger delete_airport"
 													data-id="<?php echo $row['id'] ?>"
 													title="Delete">
 													<i class="fas fa-trash-alt"></i>

@@ -262,12 +262,11 @@ class Action
         $stmt->execute();
 
         if ($stmt->affected_rows > 0) {
-            return !empty($id) ? 2 : 1; 
+            return !empty($id) ? 2 : 1;
         }
         return 0;
     }
 
-    // Delete airport
     function delete_airports()
     {
         extract($_POST);
@@ -281,24 +280,23 @@ class Action
         return 0;
     }
 
-    // Save flight
     function save_flight()
     {
         extract($_POST);
         $data = "airline_id = '$airline', plane_no = '$plane_no', departure_airport_id = '$departure_airport_id',
-                arrival_airport_id = '$arrival_airport_id', departure_datetime = '$departure_datetime',
-                arrival_datetime = '$arrival_datetime', seats = '$seats', price = '$price'";
+            arrival_airport_id = '$arrival_airport_id', departure_datetime = '$departure_datetime',
+            arrival_datetime = '$arrival_datetime', seats = '$seats', price = '$price'";
 
         $stmt = $this->db->prepare("INSERT INTO flight_list SET $data ON DUPLICATE KEY UPDATE $data");
         $stmt->execute();
 
         if ($stmt->affected_rows > 0) {
-            return 1;
+            echo json_encode(['status' => 'success', 'message' => 'Flight successfully saved.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to save flight.']);
         }
-        return 0;
     }
 
-    // Delete flight
     function delete_flight()
     {
         extract($_POST);
@@ -307,26 +305,34 @@ class Action
         $stmt->execute();
 
         if ($stmt->affected_rows > 0) {
-            return 1;
+            echo json_encode(['status' => 'success', 'message' => 'Flight successfully deleted.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to delete flight.']);
         }
-        return 0;
     }
 
-    // Book flight
     function book_flight()
     {
         extract($_POST);
+        $success = true; 
+
         foreach ($name as $k => $value) {
             $data = "flight_id = $flight_id, name = ?, address = ?, contact = ?";
             $stmt = $this->db->prepare("INSERT INTO booked_flight SET $data");
             $stmt->bind_param("sss", $name[$k], $address[$k], $contact[$k]);
             $stmt->execute();
+
+            if ($stmt->affected_rows <= 0) {
+                $success = false; 
+                break; 
+            }
         }
 
-        if ($stmt->affected_rows > 0) {
-            return 1;
+        if ($success) {
+            echo json_encode(['status' => 'success', 'message' => 'Flight successfully booked.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to book flight.']);
         }
-        return 0;
     }
 
     // Update booked flight

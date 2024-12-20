@@ -128,7 +128,7 @@ while ($row = $flights_result->fetch_assoc()) {
                                             <td><?php echo date('Y-m-d H:i', strtotime($flight['arrival_datetime'])); ?></td>
                                             <td><?php echo $flight['seats']; ?></td>
                                             <td><?php echo number_format($flight['price'], 2); ?></td>
-                                            <td><a href="book_flight.php?flight_id=<?php echo $flight['flight_id']; ?>" class="btn btn-primary btn-sm"><i class="fas fa-plane"></i> Book Now</a></td>
+                                            <td><a href="book_flight.php?flight_id=<?php echo $flight['flight_id']; ?>" class="btn btn-outline-primary btn-sm"><i class="fas fa-plane"></i> Book Now</a></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>

@@ -187,6 +187,8 @@ $qry = $conn->query("SELECT f.*, a.airlines, a.logo_path
                     }
                 },
             });
+            location.reload();
+
         });
 
         $('.delete_flight').on('click', function() {
@@ -211,6 +213,7 @@ $qry = $conn->query("SELECT f.*, a.airlines, a.logo_path
                     }
                 },
             });
+            location.reload();
         };
     });
 </script>

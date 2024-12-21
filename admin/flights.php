@@ -47,9 +47,9 @@ $qry = $conn->query("SELECT f.*, a.airlines, a.logo_path
                             <th class="text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody> 
                         <?php while ($row = $qry->fetch_assoc()):
-                            $booked = $conn->query("SELECT COUNT(*) AS total FROM booked_flight WHERE flight_id = " . $row['id'])->fetch_assoc()['total'];
+                            $booked = $conn->query("SELECT get_booking_count_by_flight(" . $row['id'] . ") AS total")->fetch_assoc()['total'];
                             $available = max(0, $row['seats'] - $booked);
                             $price = get_flight_price($row['id']);
                         ?>

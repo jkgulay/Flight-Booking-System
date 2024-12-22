@@ -1,30 +1,46 @@
 <?php
 include 'db_connect.php';
 
-$user_count_query = "SELECT COUNT(*) AS total_users FROM users";
-$user_count_result = $conn->query($user_count_query);
-$user_count = $user_count_result->fetch_assoc()['total_users'];
-
-$booked_flights_query = "SELECT COUNT(*) AS total_booked FROM booked_flight";
-$booked_flights_result = $conn->query($booked_flights_query);
-$booked_flights = $booked_flights_result->fetch_assoc()['total_booked'];
-
-$available_flights_query = "SELECT COUNT(*) AS total_available FROM flight_list WHERE seats > 0";
-$available_flights_result = $conn->query($available_flights_query);
-$available_flights = $available_flights_result->fetch_assoc()['total_available'];
-
-$flight_dates_query = "SELECT DISTINCT DATE(departure_datetime) AS flight_date FROM flight_list";
-$flight_dates_result = $conn->query($flight_dates_query);
-$flight_dates = [];
-while ($row = $flight_dates_result->fetch_assoc()) {
-    $flight_dates[] = $row['flight_date'];
+// Function to execute a query and return the result
+function executeQuery($conn, $query, $params = [])
+{
+    $stmt = $conn->prepare($query);
+    if ($params) {
+        foreach ($params as $key => &$value) {
+            $stmt->bindParam($key, $value);
+        }
+    }
+    $stmt->execute();
+    return $stmt;
 }
 
-$flight_id = 1;
-$booking_count_query = "SELECT get_booking_count_by_flight($flight_id) AS total_bookings";
-$booking_count_result = $conn->query($booking_count_query);
-$total_bookings = $booking_count_result->fetch_assoc()['total_bookings'];
+// Get total users
+$user_count_query = "SELECT COUNT(*) AS total_users FROM users";
+$user_count_result = executeQuery($conn, $user_count_query);
+$user_count = $user_count_result->fetch(PDO::FETCH_ASSOC)['total_users'];
 
+// Get total booked flights
+$booked_flights_query = "SELECT COUNT(*) AS total_booked FROM booked_flight";
+$booked_flights_result = executeQuery($conn, $booked_flights_query);
+$booked_flights = $booked_flights_result->fetch(PDO::FETCH_ASSOC)['total_booked'];
+
+// Get total available flights
+$available_flights_query = "SELECT COUNT(*) AS total_available FROM flight_list WHERE seats > 0";
+$available_flights_result = executeQuery($conn, $available_flights_query);
+$available_flights = $available_flights_result->fetch(PDO::FETCH_ASSOC)['total_available'];
+
+// Get upcoming flight dates
+$flight_dates_query = "SELECT DISTINCT DATE(departure_datetime) AS flight_date FROM flight_list";
+$flight_dates_result = executeQuery($conn, $flight_dates_query);
+$flight_dates = $flight_dates_result->fetchAll(PDO::FETCH_COLUMN);
+
+// Get booking count for a specific flight
+$flight_id = 1; // Example flight ID
+$booking_count_query = "SELECT get_booking_count_by_flight(:flight_id) AS total_bookings";
+$booking_count_result = executeQuery($conn, $booking_count_query, [':flight_id' => $flight_id]);
+$total_bookings = $booking_count_result->fetch(PDO::FETCH_ASSOC)['total_bookings'];
+
+// Get activity logs
 $logs_query = "SELECT 
                 logs.timestamp, 
                 logs.action_type, 
@@ -35,7 +51,7 @@ $logs_query = "SELECT
                FROM logs 
                INNER JOIN users ON logs.user_id = users.id 
                ORDER BY logs.timestamp DESC";
-$logs_result = $conn->query($logs_query);
+$logs_result = executeQuery($conn, $logs_query);
 ?>
 
 <style>
@@ -84,8 +100,6 @@ $logs_result = $conn->query($logs_query);
     }
 </style>
 
-</style>
-
 <body>
     <div class="container-fluid pt-3">
         <h1 class="text-center mb-4">Welcome to the Flight Booking System</h1>
@@ -93,24 +107,21 @@ $logs_result = $conn->query($logs_query);
         <div class="row">
             <div class="col-lg-12">
                 <div class="card">
-
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Quick Stats</h5>
-                        </div>
-                        <div class="card-body">
-                            <p><strong>Total Users:</strong> <?php echo $user_count; ?></p>
-                            <p><strong>Total Flights Booked:</strong> <?php echo $booked_flights; ?></p>
-                            <p><strong>Total Available Flights:</strong> <?php echo $available_flights; ?></p>
-                        </div>
+                    <div class="card-header">
+                        <h5 class="mb-0">Quick Stats</h5>
                     </div>
+                    <div class="card-body">
+                        <p><strong>Total Users:</strong> <?php echo htmlspecialchars($user_count); ?></p>
+                        <p><strong>Total Flights Booked:</strong> <?php echo htmlspecialchars($booked_flights); ?></p>
+                        <p><strong>Total Available Flights:</strong> <?php echo htmlspecialchars($available_flights); ?></p>
+                    </div>
+                </div>
 
-                    <div class="card mt-4">
-                        <div class="card-header text-white" style="background-color: #213555;">
-                            <h5 class="mb-0">Upcoming Flight Dates</h5>
-                        </div
-                            <div class="card-body">
+                <div class="card mt-4">
+                    <div class="card-header text-white" style="background-color: #213555;">
+                        <h5 class="mb-0">Upcoming Flight Dates</h5>
+                    </div>
+                    <div class="card-body">
                         <?php if (!empty($flight_dates)): ?>
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
@@ -127,29 +138,29 @@ $logs_result = $conn->query($logs_query);
                                         <?php
                                         foreach ($flight_dates as $date):
                                             $flight_details_query = "
-                            SELECT 
-                                COUNT(*) as total_flights,
-                                SUM(seats) as total_seats
-                            FROM flight_list 
-                            WHERE DATE(departure_datetime) = '$date'
-                        ";
-                                            $flight_details_result = $conn->query($flight_details_query);
-                                            $flight_details = $flight_details_result->fetch_assoc();
+                                                SELECT 
+                                                    COUNT(*) as total_flights,
+                                                    SUM(seats) as total_seats
+                                                FROM flight_list 
+                                                WHERE DATE(departure_datetime) = :date
+                                            ";
+                                            $flight_details_result = executeQuery($conn, $flight_details_query, [':date' => $date]);
+                                            $flight_details = $flight_details_result->fetch(PDO::FETCH_ASSOC);
 
                                             $booking_count_query = "
-                            SELECT SUM(get_booking_count_by_flight(id)) AS total_bookings
-                            FROM flight_list
-                            WHERE DATE(departure_datetime) = '$date'
-                        ";
-                                            $booking_count_result = $conn->query($booking_count_query);
-                                            $total_bookings = $booking_count_result->fetch_assoc()['total_bookings'] ?? 0;
+                                                SELECT SUM(get_booking_count_by_flight(id)) AS total_bookings
+                                                FROM flight_list
+                                                WHERE DATE(departure_datetime) = :date
+                                            ";
+                                            $booking_count_result = executeQuery($conn, $booking_count_query, [':date' => $date]);
+                                            $total_bookings = $booking_count_result->fetch(PDO::FETCH_ASSOC)['total_bookings'] ?? 0;
                                         ?>
                                             <tr>
                                                 <td><?php echo htmlspecialchars($date); ?></td>
                                                 <td><?php echo date('l', strtotime($date)); ?></td>
-                                                <td><?php echo $flight_details['total_flights']; ?></td>
-                                                <td><?php echo $flight_details['total_seats']; ?></td>
-                                                <td><?php echo $total_bookings; ?></td>
+                                                <td><?php echo htmlspecialchars($flight_details['total_flights']); ?></td>
+                                                <td><?php echo htmlspecialchars($flight_details['total_seats']); ?></td>
+                                                <td><?php echo htmlspecialchars($total_bookings); ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -162,12 +173,13 @@ $logs_result = $conn->query($logs_query);
                         <?php endif; ?>
                     </div>
                 </div>
+
                 <div class="card mt-4">
                     <div class="card-header text-white" style="background-color: #213555;">
                         <h5 class="mb-0">Activity Logs</h5>
                     </div>
                     <div class="card-body">
-                        <?php if ($logs_result->num_rows > 0): ?>
+                        <?php if ($logs_result->rowCount() > 0): ?>
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
                                     <thead>
@@ -181,7 +193,7 @@ $logs_result = $conn->query($logs_query);
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php while ($log = $logs_result->fetch_assoc()): ?>
+                                        <?php while ($log = $logs_result->fetch(PDO::FETCH_ASSOC)): ?>
                                             <tr>
                                                 <td><?php echo htmlspecialchars($log['timestamp']); ?></td>
                                                 <td><?php echo htmlspecialchars($log['user_name']); ?></td>
@@ -204,13 +216,10 @@ $logs_result = $conn->query($logs_query);
             </div>
         </div>
     </div>
-    </div>
 
     <!-- Footer -->
     <div class="footer mt-4">
         <p class="text-center text-muted">&copy; 2024 Flight Booking System. All rights reserved.</p>
     </div>
 
-    <script src="assets/vendor/jquery/jquery.min.js"></script>
-    <script src="assets/vendor/bootstrap/js/bootstrap.js"></script>
 </body>

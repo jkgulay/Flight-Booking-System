@@ -1,8 +1,7 @@
-<?php include('db_connect.php'); ?>
+<?php
+include('db_connect.php');
+?>
 
-<!--SHOW INDEX FROM airport_list;-->
-<!--idx_flight_airport-->
-<!-- EXPLAIN SELECT * FROM airport_list WHERE location = 'Metro Manila'; -->
 <div class="container-fluid pt-3">
 	<div class="row">
 		<!-- Form Panel -->
@@ -40,7 +39,6 @@
 								placeholder="Enter airport location"
 								required></textarea>
 						</div>
-
 					</div>
 					<div class="card-footer">
 						<div class="row">
@@ -86,7 +84,7 @@
 								<?php
 								$i = 1;
 								$airports = $conn->query("SELECT * FROM airport_list ORDER BY id ASC");
-								while ($row = $airports->fetch_assoc()):
+								while ($row = $airports->fetch(PDO::FETCH_ASSOC)):
 								?>
 									<tr>
 										<td class="text-center"><?php echo $i++ ?></td>
@@ -174,25 +172,14 @@
 			$('[name="id"]').val('');
 		}
 
-		// Form submission
-		// Form submission
 		$('#manage-airports').on('submit', function(e) {
 			e.preventDefault();
 
 			// Validate form
 			if (!validateForm()) return;
 
-
 			// Prepare data to send
 			var formData = new FormData(this);
-
-			Swal.fire({
-				title: 'Processing...',
-				text: 'Saving airport details',
-				didOpen: () => {
-					Swal.showLoading();
-				}
-			});
 
 			$.ajax({
 				url: 'ajax.php?action=save_airports',
@@ -201,23 +188,63 @@
 				processData: false,
 				contentType: false,
 				success: function(resp) {
-					if (resp == 1) {
+					console.log("Raw server response:", resp); // Log the raw response
+
+					// Convert to string and trim if it's not already a string
+					resp = String(resp).trim();
+
+					try {
+						resp = parseInt(resp); // Ensure it's a number
+
+						switch (resp) {
+							case 1:
+								Swal.fire({
+									icon: 'success',
+									title: 'Airport Added',
+									text: 'Airport details successfully saved',
+									timer: 1500,
+									showConfirmButton: false
+								}).then(() => location.reload());
+								break;
+							case 2:
+								Swal.fire({
+									icon: 'success',
+									title: 'Airport Updated',
+									text: 'Airport details successfully updated',
+									timer: 1500,
+									showConfirmButton: false
+								}).then(() => location.reload());
+								break;
+							default:
+								Swal.fire({
+									icon: 'error',
+									title: 'Error',
+									text: 'Failed to save airport details. Response: ' + resp,
+									timer: 3000,
+									showConfirmButton: true
+								});
+						}
+					} catch (error) {
+						console.error("Error parsing response:", error);
 						Swal.fire({
-							icon: 'success',
-							title: 'Airport Added',
-							text: 'Airport details successfully saved',
-							timer: 1500,
-							showConfirmButton: false
-						}).then(() => location.reload());
-					} else if (resp == 2) {
-						Swal.fire({
-							icon: 'success',
-							title: 'Airport Updated',
-							text: 'Airport details successfully updated',
-							timer: 1500,
-							showConfirmButton: false
-						}).then(() => location.reload());
+							icon: 'error',
+							title: 'Error',
+							text: 'Unexpected server response: ' + resp,
+							timer: 3000,
+							showConfirmButton: true
+						});
 					}
+				},
+				error: function(xhr, status, error) {
+					console.error("AJAX Error:", status, error);
+					console.error("Response Text:", xhr.responseText);
+					Swal.fire({
+						icon: 'error',
+						title: 'Error',
+						text: 'An error occurred while saving airport details',
+						timer: 3000,
+						showConfirmButton: true
+					});
 				}
 			});
 		});
@@ -229,18 +256,17 @@
 			cat.find("[name='id']").val($(this).data('id'));
 			cat.find("[name='airport']").val($(this).data('airport'));
 			cat.find("[name='location']").val($(this).data('location'));
-
 		});
 
-		// Delete airport
 		$(document).on('click', '.delete_airport', function() {
 			var id = $(this).data('id');
+
 			Swal.fire({
 				title: 'Are you sure?',
 				text: "You won't be able to revert this!",
 				icon: 'warning',
 				showCancelButton: true,
-				confirmButtonColor: '#3085 d6',
+				confirmButtonColor: '#3085d6',
 				cancelButtonColor: '#d33',
 				confirmButtonText: 'Yes, delete it!'
 			}).then((result) => {
@@ -252,9 +278,42 @@
 							id: id
 						},
 						success: function(resp) {
-							if (resp == 1) {
-								Swal.fire('Deleted!', 'Airport has been deleted.', 'success').then(() => location.reload());
+							console.log("Raw delete response:", resp); // Log the raw response
+
+							// Convert to string and trim
+							resp = String(resp).trim();
+
+							switch (resp) {
+								case "1":
+									Swal.fire({
+										icon: 'success',
+										title: 'Deleted!',
+										text: 'Airport has been deleted.',
+										timer: 1500,
+										showConfirmButton: false
+									}).then(() => location.reload());
+									break;
+								default:
+									Swal.fire({
+										icon: 'error',
+										title: 'Error',
+										text: 'Failed to delete airport. Please try again.',
+										timer: 3000,
+										showConfirmButton: true
+									});
 							}
+						},
+						error: function(xhr, status, error) {
+							console.error("Delete AJAX Error:", status, error);
+							console.error("Response Text:", xhr.responseText);
+
+							Swal.fire({
+								icon: 'error',
+								title: 'Error',
+								text: 'An error occurred while deleting the airport',
+								timer: 3000,
+								showConfirmButton: true
+							});
 						}
 					});
 				}

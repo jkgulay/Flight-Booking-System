@@ -1,21 +1,20 @@
 <?php
-include 'db_connect.php';
+include('db_connect.php');
 
 function get_flight_price($flight_id)
 {
     global $conn;
-    $query = "SELECT price FROM flight_list WHERE id = ?";
+    $query = "SELECT price FROM flight_list WHERE id = :flight_id";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $flight_id);
+    $stmt->bindParam(':flight_id', $flight_id, PDO::PARAM_INT);
     $stmt->execute();
-    $result = $stmt->get_result();
-    $price = $result->fetch_assoc();
+    $price = $stmt->fetch(PDO::FETCH_ASSOC);
     return $price ? $price['price'] : null;
 }
 
 $airport = $conn->query("SELECT * FROM airport_list");
 $aname = [];
-while ($row = $airport->fetch_assoc()) {
+while ($row = $airport->fetch(PDO::FETCH_ASSOC)) {
     $aname[$row['id']] = ucwords($row['airport'] . ', ' . $row['location']);
 }
 
@@ -47,9 +46,9 @@ $qry = $conn->query("SELECT f.*, a.airlines, a.logo_path
                             <th class="text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody> 
-                        <?php while ($row = $qry->fetch_assoc()):
-                            $booked = $conn->query("SELECT get_booking_count_by_flight(" . $row['id'] . ") AS total")->fetch_assoc()['total'];
+                    <tbody>
+                        <?php while ($row = $qry->fetch(PDO::FETCH_ASSOC)):
+                            $booked = $conn->query("SELECT get_booking_count_by_flight(" . $row['id'] . ") AS total")->fetch(PDO::FETCH_ASSOC)['total'];
                             $available = max(0, $row['seats'] - $booked);
                             $price = get_flight_price($row['id']);
                         ?>
@@ -103,7 +102,7 @@ $qry = $conn->query("SELECT f.*, a.airlines, a.logo_path
                             <option value="">Select Airline</option>
                             <?php
                             $airline = $conn->query("SELECT * FROM airlines_list ORDER BY airlines ASC");
-                            while ($row = $airline->fetch_assoc()):
+                            while ($row = $airline->fetch(PDO::FETCH_ASSOC)):
                             ?>
                                 <option value="<?php echo $row['id']; ?>"><?php echo htmlspecialchars($row['airlines']); ?></option>
                             <?php endwhile; ?>
@@ -173,47 +172,287 @@ $qry = $conn->query("SELECT f.*, a.airlines, a.logo_path
 
         $('#manage-flight').on('submit', function(e) {
             e.preventDefault();
+
+            // Validate form before submission
+            if (!validateFlightForm()) return;
+
             $.ajax({
                 url: 'ajax.php?action=save_flight',
                 method: 'POST',
                 data: $(this).serialize(),
-                success: function(response) {
-                    const data = JSON.parse(response);
+                dataType: 'json', // Expect JSON response
+                success: function(data) {
                     if (data.status === 'success') {
-                        alert_toast('Flight successfully saved.', 'success');
-                        setTimeout(() => location.reload(), 1500);
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            $('#manageFlightModal').modal('hide');
+                            location.reload();
+                        });
                     } else {
-                        alert_toast('Failed to save flight. Try again.', 'danger');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to save flight',
+                            timer: 3000,
+                            showConfirmButton: true
+                        });
                     }
                 },
-            });
-            location.reload();
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    console.error("Response Text:", xhr.responseText);
 
+                    // Try to parse the response text in case of error
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to save flight',
+                            timer: 3000,
+                            showConfirmButton: true
+                        });
+                    } catch (parseError) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An unexpected error occurred while saving flight details',
+                            timer: 3000,
+                            showConfirmButton: true
+                        });
+                    }
+                }
+            });
         });
 
+        // Edit flight functionality
+        $('.edit_flight').on('click', function() {
+            // Reset form
+            $('#manage-flight')[0].reset();
+
+            // Populate form with existing data
+            var id = $(this).data('id');
+            var airline = $(this).data('airline_id');
+            var planeNo = $(this).data('plane_no');
+            var departureAirport = $(this).data('departure_airport_id');
+            var arrivalAirport = $(this).data('arrival_airport_id');
+            var departureDatetime = $(this).data('departure_datetime');
+            var arrivalDatetime = $(this).data('arrival_datetime');
+            var seats = $(this).data('seats');
+            var price = $(this).data('price');
+
+            // Set form values
+            $('#manage-flight input[name="id"]').val(id);
+            $('#manage-flight select[name="airline"]').val(airline);
+            $('#manage-flight input[name="plane_no"]').val(planeNo);
+            $('#manage-flight select[name="departure_airport_id"]').val(departureAirport);
+            $('#manage-flight select[name="arrival_airport_id"]').val(arrivalAirport);
+            $('#manage-flight input[name="departure_datetime"]').val(departureDatetime);
+            $('#manage-flight input[name="arrival_datetime"]').val(arrivalDatetime);
+            $('#manage-flight input[name="seats"]').val(seats);
+            $('#manage-flight input[name="price"]').val(price);
+
+            // Show modal
+            $('#manageFlightModal').modal('show');
+        });
+
+        // Delete flight functionality
         $('.delete_flight').on('click', function() {
-            const id = $(this).data('id');
-            _conf('Are you sure you want to delete this flight?', 'delete_flight', [id]);
-        });
+            var id = $(this).data('id');
 
-        window.delete_flight = function(id) {
-            $.ajax({
-                url: 'ajax.php?action=delete_flight',
-                method: 'POST',
-                data: {
-                    id
-                },
-                success: function(response) {
-                    const data = JSON.parse(response);
-                    if (data.status === 'success') {
-                        alert_toast('Flight successfully deleted.', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        alert_toast('Failed to delete flight. Try again.', 'danger');
-                    }
-                },
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'ajax.php?action=delete_flight',
+                        method: 'POST',
+                        data: {
+                            id: id
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.status === 'success') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Deleted!',
+                                    text: data.message,
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => location.reload());
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: data.message,
+                                    timer: 3000,
+                                    showConfirmButton: true
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("AJAX Error:", status, error);
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred while deleting the flight',
+                                timer: 3000,
+                                showConfirmButton: true
+                            });
+                        }
+                    });
+                }
             });
-            location.reload();
-        };
+        });
+    });
+
+    // Validation function
+    function validateFlightForm() {
+        const airline = $('[name="airline"]').val();
+        const planeNo = $('[name="plane_no"]').val();
+        const departureAirport = $('[name="departure_airport_id"]').val();
+        const arrivalAirport = $('[name="arrival_airport_id"]').val();
+        const departureDatetime = $('[name="departure_datetime"]').val();
+        const arrivalDatetime = $('[name="arrival_datetime"]').val();
+        const seats = $('[name="seats"]').val();
+        const price = $('[name="price"]').val();
+
+        // Validation checks
+        const validations = [{
+                condition: !airline,
+                message: 'Please select an airline'
+            },
+            {
+                condition: !planeNo,
+                message: 'Please enter plane number'
+            },
+            {
+                condition: !departureAirport,
+                message: 'Please select departure airport'
+            },
+            {
+                condition: !arrivalAirport,
+                message: 'Please select arrival airport'
+            },
+            {
+                condition: departureAirport === arrivalAirport,
+                message: 'Departure and arrival airports cannot be the same'
+            },
+            {
+                condition: !departureDatetime,
+                message: 'Please select departure date and time'
+            },
+            {
+                condition: !arrivalDatetime,
+                message: 'Please select arrival date and time'
+            },
+            {
+                condition: !seats || seats <= 0,
+                message: 'Please enter a valid number of seats'
+            },
+            {
+                condition: !price || price <= 0,
+                message: 'Please enter a valid price'
+            }
+        ];
+
+        // Check validations
+        for (let validation of validations) {
+            if (validation.condition) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: validation.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                return false;
+            }
+        }
+
+        // Additional datetime validation
+        const departureTime = new Date(departureDatetime);
+        const arrivalTime = new Date(arrivalDatetime);
+
+        if (departureTime >= arrivalTime) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: 'Arrival time must be after departure time',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    // Delete Flight
+    $('.delete_flight').on('click', function() {
+        const id = $(this).data('id');
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'ajax.php?action=delete_flight',
+                    method: 'POST',
+                    data: {
+                        id: id
+                    },
+                    dataType: 'json', // Expect JSON response
+                    success: function(data) {
+                        if (data.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: data.message,
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message,
+                                timer: 3000,
+                                showConfirmButton: true
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("AJAX Error:", status, error);
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while deleting the flight',
+                            timer: 3000,
+                            showConfirmButton: true
+                        });
+                    }
+                });
+            }
+        });
     });
 </script>

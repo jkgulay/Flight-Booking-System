@@ -1,22 +1,22 @@
 <?php
 include 'db_connect.php';
 
+// Function to get flight price
 function get_flight_price($flight_id)
 {
     global $conn;
-    $query = "SELECT price FROM flight_list WHERE id = ?";
+    $query = "SELECT price FROM flight_list WHERE id = :flight_id";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $flight_id);
+    $stmt->bindParam(':flight_id', $flight_id, PDO::PARAM_INT);
     $stmt->execute();
-    $result = $stmt->get_result();
-    $price = $result->fetch_assoc();
+    $price = $stmt->fetch(PDO::FETCH_ASSOC);
     return $price ? $price['price'] : null;
 }
 
 // Fetch airport names
 $airport = $conn->query("SELECT * FROM airport_list");
 $aname = [];
-while ($row = $airport->fetch_assoc()) {
+while ($row = $airport->fetch(PDO::FETCH_ASSOC)) {
     $aname[$row['id']] = ucwords($row['airport'] . ', ' . $row['location']);
 }
 
@@ -29,11 +29,11 @@ $qry = $conn->query($flights_query);
 
 $flights = [];
 if ($qry) {
-    while ($row = $qry->fetch_assoc()) {
+    while ($row = $qry->fetch(PDO::FETCH_ASSOC)) {
         $flights[] = $row;
     }
 } else {
-    echo "Error fetching flights: " . $conn->error;
+    echo "Error fetching flights: " . $conn->errorInfo()[2];
 }
 
 // Fetch booked flights
@@ -49,18 +49,20 @@ $booked_flights_query = "
            b.status 
     FROM booked_flight b
     INNER JOIN flight_details f ON b.flight_id = f.flight_id
-    WHERE b.user_id = " . intval($user_id) . "  -- Ensure user_id is an integer
+    WHERE b.user_id = :user_id
     ORDER BY b.id DESC
 ";
 
-$booked_flights_result = $conn->query($booked_flights_query);
+$booked_flights_stmt = $conn->prepare($booked_flights_query);
+$booked_flights_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+$booked_flights_stmt->execute();
 $booked_flights = [];
-if ($booked_flights_result) {
-    while ($row = $booked_flights_result->fetch_assoc()) {
+if ($booked_flights_stmt) {
+    while ($row = $booked_flights_stmt->fetch(PDO::FETCH_ASSOC)) {
         $booked_flights[] = $row;
     }
 } else {
-    echo "Error fetching booked flights: " . $conn->error;
+    echo "Error fetching booked flights: " . $conn->errorInfo()[2];
 }
 ?>
 
@@ -85,7 +87,7 @@ if ($booked_flights_result) {
                     </thead>
                     <tbody>
                         <?php foreach ($flights as $row):
-                            $booked = $conn->query("SELECT COUNT(*) AS total FROM booked_flight WHERE flight_id = " . $row['id'])->fetch_assoc()['total'];
+                            $booked = $conn->query("SELECT COUNT(*) AS total FROM booked_flight WHERE flight_id = " . $row['id'])->fetch(PDO::FETCH_ASSOC)['total'];
                             $available = max(0, $row['seats'] - $booked);
                             $price = get_flight_price($row['id']);
                         ?>
@@ -96,7 +98,7 @@ if ($booked_flights_result) {
                                         <img src="../assets/img/<?php echo htmlspecialchars($row['logo_path']); ?>" alt="Airline Logo" class="img-fluid rounded-circle" style="width: 50px; height: auto;">
                                         <div class="ml-3">
                                             <p class="mb-1">Airline: <strong><?php echo htmlspecialchars($row['airlines']); ?></strong></p>
-                                            <p class="mb-1">From: <strong><?php echo $aname[$row['departure_airport_id']] ?? "Unknown Airport"; ?></strong></p>
+                                            <p class="mb-1"> From: <strong><?php echo $aname[$row['departure_airport_id']] ?? "Unknown Airport"; ?></strong></p>
                                             <p class="mb-1">To: <strong><?php echo $aname[$row['arrival_airport_id']] ?? "Unknown Airport"; ?></strong></p>
                                             <p class="mb-1">Departure: <strong><?php echo date('M d, Y h:i A', strtotime($row['departure_datetime'])); ?></strong></p>
                                             <p class="mb-0">Arrival: <strong><?php echo date('M d, Y h:i A', strtotime($row['arrival_datetime'])); ?></strong></p>

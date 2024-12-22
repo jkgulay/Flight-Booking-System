@@ -1,7 +1,28 @@
-<?php include('db_connect.php'); 
-//materialized view 
-$booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_booking_summary_materialized ORDER BY airlines ASC");
+<?php
+include('db_connect.php');
+try {
+    $conn->query("SELECT public.refresh_airline_booking_summary()");
 
+    $booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_booking_summary_materialized ORDER BY total_bookings DESC");
+} catch (PDOException $e) {
+    error_log("Booking summary refresh error: " . $e->getMessage());
+
+    $booking_summary = $conn->query("
+        SELECT 
+            a.airlines,
+            COUNT(b.id) AS total_bookings
+        FROM 
+            booked_flight b
+        JOIN 
+            flight_list f ON b.flight_id = f.id
+        JOIN 
+            airlines_list a ON f.airline_id = a.id
+        GROUP BY 
+            a.airlines
+        ORDER BY 
+            total_bookings DESC
+    ");
+}
 ?>
 
 <div class="container-fluid pt-3">
@@ -95,7 +116,7 @@ $booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_bo
                                 <?php
                                 $i = 1;
                                 $airlines = $conn->query("SELECT * FROM airlines_list ORDER BY id ASC");
-                                while ($row = $airlines->fetch_assoc()):
+                                while ($row = $airlines->fetch(PDO::FETCH_ASSOC)):
                                 ?>
                                     <tr>
                                         <td class="text-center"><?php echo $i++ ?></td>
@@ -109,8 +130,7 @@ $booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_bo
                                         <td><?php echo htmlspecialchars($row['airlines']); ?></td>
                                         <td class="text-center">
                                             <div class="btn-group" role="group">
-                                                <button
-                                                    class="btn btn-sm btn-outline-warning edit_airline"
+                                                <button class="btn btn-sm btn-outline-warning edit_airline"
                                                     data-id="<?php echo $row['id'] ?>"
                                                     data-airlines="<?php echo htmlspecialchars($row['airlines']) ?>"
                                                     data-logo_path="<?php echo htmlspecialchars($row['logo_path']) ?>"
@@ -154,8 +174,7 @@ $booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_bo
                             </thead>
                             <tbody>
                                 <?php
-                                $booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_booking_summary_materialized ORDER BY airlines ASC");
-                                while ($row = $booking_summary->fetch_assoc()): ?>
+                                while ($row = $booking_summary->fetch(PDO::FETCH_ASSOC)): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($row['airlines']); ?></td>
                                         <td class="text-center"><?php echo htmlspecialchars($row['total_bookings']); ?></td>
@@ -245,40 +264,79 @@ $booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_bo
 
     $('#manage-airlines').on('submit', function(e) {
         e.preventDefault();
-        start_load();
+
+        // Validate form
+        if (!validateForm()) return;
+
+        // Prepare form data
+        var formData = new FormData(this);
+
         $.ajax({
             url: 'ajax.php?action=save_airlines',
-            data: new FormData(this),
-            cache: false,
-            contentType: false,
-            processData: false,
             method: 'POST',
-            success: function(resp) {
-                if (resp == 1) {
-                    alert_toast("Data successfully added", 'success');
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1500);
-                } else if (resp == 2) {
-                    alert_toast("Data successfully updated", 'success');
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1500);
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json', // Expect JSON response
+            success: function(data) {
+                console.log("Server response:", data);
+
+                if (data.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: data.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message,
+                        timer: 3000,
+                        showConfirmButton: true
+                    });
                 }
             },
-            error: function() {
-                alert_toast("An error occurred while processing your request.", 'error');
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", status, error);
+                console.error("Response Text:", xhr.responseText);
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while saving airline details',
+                    timer: 3000,
+                    showConfirmButton: true
+                });
             }
         });
-        end_load();
     });
+
+    function validateForm() {
+        const airlines = $('[name="airlines"]').val().trim();
+
+        if (airlines === '') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: 'Please enter an airline name',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            return false;
+        }
+
+        return true;
+    }
 
     $('.edit_airline').click(function() {
         start_load();
-        var cat = $('#manage-airlines');
-        cat.get(0).reset();
-        cat.find("[name='id']").val($(this).data('id'));
-        cat.find("[name='airlines']").val($(this).data('airlines'));
+        var form = $('#manage-airlines');
+        form.get(0).reset();
+        form.find("[name='id']").val($(this).data('id'));
+        form.find("[name='airlines']").val($(this).data('airlines'));
         $('#cimg').attr("src", "../assets/img/" + $(this).data('logo_path')).show();
         end_load();
     });

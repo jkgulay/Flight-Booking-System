@@ -24,18 +24,17 @@ $stmt = $conn->prepare("
             ELSE 'Unknown'
         END AS user_role
     FROM users u 
-    WHERE u.id = ?
+    WHERE u.id = :id
 ");
-$stmt->bind_param("i", $id);
+$stmt->bindParam(':id', $id, PDO::PARAM_INT);
 $stmt->execute();
-$result = $stmt->get_result();
 
-if ($result->num_rows === 0) {
+if ($stmt->rowCount() === 0) {
     http_response_code(404);
     die(json_encode(['error' => 'User  not found']));
 }
 
-$user = $result->fetch_assoc();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Fetch recent bookings
 $bookings_stmt = $conn->prepare("
@@ -43,8 +42,8 @@ $bookings_stmt = $conn->prepare("
         bf.id, 
         f.plane_no, 
         al.airlines, 
-        dep.airport as departure_airport, 
-        arr.airport as arrival_airport, 
+        dep.airport AS departure_airport, 
+        arr.airport AS arrival_airport, 
         f.departure_datetime, 
         f.arrival_datetime
     FROM booked_flight bf
@@ -52,24 +51,24 @@ $bookings_stmt = $conn->prepare("
     JOIN airlines_list al ON f.airline_id = al.id
     JOIN airport_list dep ON f.departure_airport_id = dep.id
     JOIN airport_list arr ON f.arrival_airport_id = arr.id
-    WHERE bf.name = ? OR bf.contact = ?
+    WHERE bf.name = :name OR bf.contact = :contact
     ORDER BY f.departure_datetime DESC
     LIMIT 5
 ");
-$bookings_stmt->bind_param("ss", $user['name'], $user['contact']);
+$bookings_stmt->bindParam(':name', $user['name']);
+$bookings_stmt->bindParam(':contact', $user['contact']);
 $bookings_stmt->execute();
-$bookings_result = $bookings_stmt->get_result();
-$recent_bookings = $bookings_result->fetch_all(MYSQLI_ASSOC);
+$recent_bookings = $bookings_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $total_bookings_stmt = $conn->prepare("
-    SELECT COUNT(*) as booking_count
+    SELECT COUNT(*) AS booking_count
     FROM booked_flight
-    WHERE name = ? OR contact = ?
+    WHERE name = :name OR contact = :contact
 ");
-$total_bookings_stmt->bind_param("ss", $user['name'], $user['contact']);
+$total_bookings_stmt->bindParam(':name', $user['name']);
+$total_bookings_stmt->bindParam(':contact', $user['contact']);
 $total_bookings_stmt->execute();
-$total_bookings_result = $total_bookings_stmt->get_result();
-$total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
+$total_bookings = $total_bookings_stmt->fetch(PDO::FETCH_ASSOC)['booking_count'];
 ?>
 
 <div class="modal-body user-profile-modal">
@@ -78,7 +77,7 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
             <!-- Profile Header -->
             <div class="col-12 text-center mb-2">
                 <div class="avatar-container mb-2">
-
+                    <!-- Avatar can be added here -->
                 </div>
                 <h2 class="mt-3 mb-1"><?php echo htmlspecialchars($user['name']); ?></h2>
                 <p class="text-muted">
@@ -121,7 +120,7 @@ $total_bookings = $total_bookings_result->fetch_assoc()['booking_count'];
                                 <td><?php echo htmlspecialchars($user['contact'] ?? 'N/A'); ?></td>
                             </tr>
                             <tr>
-                                <th><i class="fas fa-map-marker-alt mr-2"></i>Address</th>
+                                <th><i class="fas fa-map-marker-alt mr-2"></i> Address</th>
                                 <td><?php echo htmlspecialchars($user['address'] ?? 'N/A'); ?></td>
                             </tr>
                         </table>

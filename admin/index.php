@@ -6,11 +6,15 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-5/5.39.0/css/tempusdominus-bootstrap-5.min.css" />
+
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-5/5.39.0/js/tempusdominus-bootstrap-5.min.js"></script>
 
   <title>Admin | Flight Booking System</title>
 
@@ -25,8 +29,6 @@
   $user_id = $_SESSION['login_id'];
   $user_type = $_SESSION['type'];
   $login_name = $_SESSION['name'];
-
-
   ?>
 
   <style>
@@ -79,7 +81,7 @@
           <div id="delete_content"></div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id='confirm' onclick="">Continue</button>
+          <button type="button" class="btn btn-primary" id='confirm' onclick="">Continue </button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
@@ -163,8 +165,8 @@
       });
 
       $('.datetimepicker').datetimepicker({
-        format: 'Y/m/d H:i',
-        startDate: '+3d'
+        format: 'YYYY/MM/DD HH:mm',
+        useCurrent: false 
       });
 
       $('.select2').select2({

@@ -1,8 +1,16 @@
 <?php 
 
-$conn = new mysqli('localhost', 'root', '', 'flight_booking_db');
+$host = 'localhost';
+$dbname = 'flight_booking_db'; 
+$username = 'postgres'; 
+$password = 'admin'; 
 
-// Check for connection errors
-if ($conn->connect_error) {
-    die("Could not connect to MySQL: " . $conn->connect_error);
+try {
+    $conn = new PDO("pgsql:host=$host;dbname=$dbname", $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, 
+    ]);
+    echo "";
+} catch (PDOException $e) {
+    die("Could not connect to PostgreSQL: " . $e->getMessage());
 }
+?>

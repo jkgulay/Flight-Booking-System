@@ -1,23 +1,19 @@
 <?php
-include 'db_connect.php';
+include 'db_connect.php'; 
+
 $user_id = isset($_SESSION['login_id']) ? $_SESSION['login_id'] : null;
 if ($user_id === null) {
     header("Location: login.php");
     exit();
 }
 
-//flight_details view
+// Fetch available flights
 $flights_query = "SELECT flight_id, airlines, departure_airport, arrival_airport, departure_datetime, arrival_datetime, price, seats FROM flight_details WHERE seats > 0 ORDER BY departure_datetime ASC";
-$flights_result = $conn->query($flights_query);
-$flights = [];
-if ($flights_result) {
-    while ($row = $flights_result->fetch_assoc()) {
-        $flights[] = $row;
-    }
-} else {
-    echo "Error fetching flights: " . $conn->error;
-}
+$flights_stmt = $conn->prepare($flights_query);
+$flights_stmt->execute();
+$flights = $flights_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Fetch booked flights for the user
 $booked_flights_query = "
     SELECT b.id AS booking_id, 
            f.flight_id, 
@@ -30,20 +26,13 @@ $booked_flights_query = "
            b.status 
     FROM booked_flight b
     INNER JOIN flight_details f ON b.flight_id = f.flight_id
-    WHERE b.user_id = " . intval($user_id) . "  -- Ensure user_id is an integer
+    WHERE b.user_id = :user_id
     ORDER BY b.id DESC
 ";
-
-//booked_flight_summary view
-$booked_flights_result = $conn->query($booked_flights_query);
-$booked_flights = [];
-if ($booked_flights_result) {
-    while ($row = $booked_flights_result->fetch_assoc()) {
-        $booked_flights[] = $row;
-    }
-} else {
-    echo "Error fetching booked flights: " . $conn->error;
-}
+$booked_flights_stmt = $conn->prepare($booked_flights_query);
+$booked_flights_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+$booked_flights_stmt->execute();
+$booked_flights = $booked_flights_stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <style>
@@ -145,7 +134,8 @@ if ($booked_flights_result) {
                                         <th>Destination</th>
                                         <th>Departure</th>
                                         <th>Status</th>
-                                    </tr>
+                                    </tr ```php
+                                        </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($booked_flights as $flight): ?>

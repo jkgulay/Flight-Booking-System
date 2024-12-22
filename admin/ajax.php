@@ -4,7 +4,7 @@ ini_set('display_errors', 1);
 ob_start();
 header('Content-Type: application/json');
 include 'admin_class.php';
-include('db_connect.php');
+include('db_connect.php'); 
 $crud = new Action();
 
 function sendJsonResponse($status, $message, $data = null)

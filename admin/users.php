@@ -7,15 +7,18 @@ function getUserCount()
 {
     global $conn;
 
-    $query = "SELECT 
-        COUNT(*) as total_users,
-        SUM(CASE WHEN type = 1 THEN 1 ELSE 0 END) as admin_users,
-        SUM(CASE WHEN type = 2 THEN 1 ELSE 0 END) as staff_users,
-        SUM(CASE WHEN type = 3 THEN 1 ELSE 0 END) as customer_users
-    FROM users";
+    $query = "
+        SELECT 
+            COUNT(*) AS total_users,
+            SUM(CASE WHEN type = 1 THEN 1 ELSE 0 END) AS admin_users,
+            SUM(CASE WHEN type = 2 THEN 1 ELSE 0 END) AS staff_users,
+            SUM(CASE WHEN type = 3 THEN 1 ELSE 0 END) AS customer_users
+        FROM users
+    ";
 
-    $result = $conn->query($query);
-    return $result->fetch_assoc();
+    $stmt = $conn->prepare($query);
+    $stmt->execute();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 // Get user statistics
@@ -109,7 +112,7 @@ $users = $conn->query("
                     <tbody>
                         <?php
                         $i = 1;
-                        while ($row = $users->fetch_assoc()):
+                        while ($row = $users->fetch(PDO::FETCH_ASSOC)):
                         ?>
                             <tr>
                                 <td class="text-center"><?php echo $i++ ?></td>
@@ -317,7 +320,6 @@ $users = $conn->query("
             $('body').prepend('<div class="loader-container"><div class="loader"></div></div>');
         }
 
-        // Loading indicator end
         function end_load() {
             $('.loader-container').remove();
         }

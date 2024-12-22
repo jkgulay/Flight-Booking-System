@@ -2,20 +2,27 @@
 include('db_connect.php');
 
 // booked_flight index
-$qry = $conn->query("
-    SELECT b.*, 
-           f.flight_id, 
-           f.departure_airport, 
-           f.arrival_airport, 
-           f.departure_datetime, 
-           f.arrival_datetime, 
-           f.price, 
-           f.airlines 
-    FROM booked_flight b 
-    INNER JOIN flight_details f ON f.flight_id = b.flight_id 
-    WHERE b.status = 'pending' 
-    ORDER BY b.id DESC
-");
+try {
+    $qry = $conn->query("
+        SELECT b.*, 
+               f.flight_id, 
+               f.departure_airport, 
+               f.arrival_airport, 
+               f.departure_datetime, 
+               f.arrival_datetime, 
+               f.price, 
+               f.airlines 
+        FROM booked_flight b 
+        INNER JOIN flight_details f ON f.flight_id = b.flight_id 
+        WHERE b.status = 'pending' 
+        ORDER BY b.id DESC
+    ");
+
+    // Fetch all results
+    $results = $qry->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Query failed: " . $e->getMessage());
+}
 ?>
 
 <div class="container-fluid pt-3">
@@ -38,7 +45,7 @@ $qry = $conn->query("
                     <tbody>
                         <?php
                         $i = 1;
-                        while ($row = $qry->fetch_assoc()):
+                        foreach ($results as $row):
                         ?>
                             <tr>
                                 <td><?php echo $i++; ?></td>
@@ -62,7 +69,7 @@ $qry = $conn->query("
                                     <button class="btn btn-danger btn-sm decline-booking" data-id="<?php echo $row['id']; ?>">Decline</button>
                                 </td>
                             </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>

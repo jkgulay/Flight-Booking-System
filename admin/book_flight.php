@@ -1,7 +1,7 @@
 <?php
 session_start();
-include 'db_connect.php';
-// SHOW INDEX FROM booked_flight;
+include 'db_connect.php'; 
+
 $user_id = isset($_SESSION['login_id']) ? $_SESSION['login_id'] : null;
 if ($user_id === null) {
     header("Location: login.php");
@@ -10,11 +10,13 @@ if ($user_id === null) {
 
 if (isset($_GET['flight_id'])) {
     $flight_id = intval($_GET['flight_id']);
-    $flight_query = "SELECT * FROM flight_details WHERE flight_id = $flight_id";
-    $flight_result = $conn->query($flight_query);
+    $flight_query = "SELECT * FROM flight_details WHERE flight_id = :flight_id";
+    $stmt = $conn->prepare($flight_query);
+    $stmt->bindParam(':flight_id', $flight_id, PDO::PARAM_INT);
+    $stmt->execute();
 
-    if ($flight_result->num_rows > 0) {
-        $flight = $flight_result->fetch_assoc();
+    if ($stmt->rowCount() > 0) {
+        $flight = $stmt->fetch(PDO::FETCH_ASSOC);
     } else {
         die('Flight not found.');
     }
@@ -23,20 +25,26 @@ if (isset($_GET['flight_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $conn->real_escape_string($_POST['name']);
-    $address = $conn->real_escape_string($_POST['address']);
-    $contact = $conn->real_escape_string($_POST['contact']);
+    $name = trim($_POST['name']);
+    $address = trim($_POST['address']);
+    $contact = trim($_POST['contact']);
     $flight_id = intval($_POST['flight_id']);
 
     // Validate input
     if (empty($name) || empty($address) || empty($contact)) {
         echo "<script>alert('All fields are required.');</script>";
     } else {
-        // Insert booking into the database
+        // Insert booking into the database using prepared statements
         $booking_query = "INSERT INTO booked_flight (flight_id, user_id, name, address, contact, status) 
-                          VALUES ('$flight_id', '$user_id', '$name', '$address', '$contact', 'pending')";
+                          VALUES (:flight_id, :user_id, :name, :address, :contact, 'pending')";
+        $stmt = $conn->prepare($booking_query);
+        $stmt->bindParam(':flight_id', $flight_id, PDO::PARAM_INT);
+        $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->bindParam(':name', $name, PDO::PARAM_STR);
+        $stmt->bindParam(':address', $address, PDO::PARAM_STR);
+        $stmt->bindParam(':contact', $contact, PDO::PARAM_STR);
 
-        if ($conn->query($booking_query)) {
+        if ($stmt->execute()) {
             echo "<script>alert('Booking successful!'); window.location.href = 'index.php';</script>";
         } else {
             echo "<script>alert('Booking failed. Please try again.');</script>";
@@ -137,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         button:hover {
             background-color: #0056b3;
- }
+        }
 
         .button:disabled {
             background-color: #6c757d;

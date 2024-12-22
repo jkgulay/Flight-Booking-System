@@ -10,22 +10,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = intval($_POST['id']); 
     $action = $_POST['action'];
 
-    if ($action === 'approve') {
-        $update = $conn->query("UPDATE booked_flight SET status = 'accepted' WHERE id = $id");
-        if ($update) {
-            echo json_encode(['message' => 'Booking approved successfully.']);
+    try {
+        if ($action === 'approve') {
+            $stmt = $conn->prepare("UPDATE booked_flight SET status = 'accepted' WHERE id = :id");
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($stmt->rowCount() > 0) {
+                echo json_encode(['message' => 'Booking approved successfully.']);
+            } else {
+                echo json_encode(['message' => 'No booking found with the provided ID or status already updated.']);
+            }
+        } elseif ($action === 'decline') {
+            $stmt = $conn->prepare("UPDATE booked_flight SET status = 'declined' WHERE id = :id");
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($stmt->rowCount() > 0) {
+                echo json_encode(['message' => 'Booking declined successfully.']);
+            } else {
+                echo json_encode(['message' => 'No booking found with the provided ID or status already updated.']);
+            }
         } else {
-            echo json_encode(['message' => 'Failed to approve the booking.']);
+            echo json_encode(['message' => 'Invalid action.']);
         }
-    } elseif ($action === 'decline') {
-        $update = $conn->query("UPDATE booked_flight SET status = 'decline' WHERE id = $id");
-        if ($update) {
-            echo json_encode(['message' => 'Booking declined successfully.']);
-        } else {
-            echo json_encode(['message' => 'Failed to decline the booking.']);
-        }
-    } else {
-        echo json_encode(['message' => 'Invalid action.']);
+    } catch (PDOException $e) {
+        echo json_encode(['message' => 'Database error: ' . $e->getMessage()]);
     }
     exit;
 }

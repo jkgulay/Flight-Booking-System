@@ -1,7 +1,6 @@
 <?php
 include('db_connect.php');
 
-// booked_flight index
 try {
     $qry = $conn->query("
         SELECT b.*, 

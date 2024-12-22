@@ -19,8 +19,8 @@ $user_count_query = "SELECT COUNT(*) AS total_users FROM users";
 $user_count_result = executeQuery($conn, $user_count_query);
 $user_count = $user_count_result->fetch(PDO::FETCH_ASSOC)['total_users'];
 
-// Get total booked flights
-$booked_flights_query = "SELECT COUNT(*) AS total_booked FROM booked_flight";
+// booked_flight_summary
+$booked_flights_query = "SELECT COUNT(*) AS total_booked FROM booked_flight_summary";
 $booked_flights_result = executeQuery($conn, $booked_flights_query);
 $booked_flights = $booked_flights_result->fetch(PDO::FETCH_ASSOC)['total_booked'];
 
@@ -34,7 +34,7 @@ $flight_dates_query = "SELECT DISTINCT DATE(departure_datetime) AS flight_date F
 $flight_dates_result = executeQuery($conn, $flight_dates_query);
 $flight_dates = $flight_dates_result->fetchAll(PDO::FETCH_COLUMN);
 
-// Get booking count for a specific flight
+// Get booking count for a specific flight - tablue-valued function
 $flight_id = 1; // Example flight ID
 $booking_count_query = "SELECT get_booking_count_by_flight(:flight_id) AS total_bookings";
 $booking_count_result = executeQuery($conn, $booking_count_query, [':flight_id' => $flight_id]);

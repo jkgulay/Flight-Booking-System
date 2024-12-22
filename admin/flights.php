@@ -4,7 +4,8 @@ include('db_connect.php');
 function get_flight_price($flight_id)
 {
     global $conn;
-    $query = "SELECT price FROM flight_list WHERE id = :flight_id";
+    // Call the scalar function in the SQL query
+    $query = "SELECT public.get_flight_price(:flight_id) AS price";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':flight_id', $flight_id, PDO::PARAM_INT);
     $stmt->execute();
@@ -47,7 +48,7 @@ $qry = $conn->query("SELECT f.*, a.airlines, a.logo_path
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($row = $qry->fetch(PDO::FETCH_ASSOC)):
+                        <?php while ($row = $qry->fetch(PDO::FETCH_ASSOC)): // Get booking count for a specific flight - tablue-valued function
                             $booked = $conn->query("SELECT get_booking_count_by_flight(" . $row['id'] . ") AS total")->fetch(PDO::FETCH_ASSOC)['total'];
                             $available = max(0, $row['seats'] - $booked);
                             $price = get_flight_price($row['id']);

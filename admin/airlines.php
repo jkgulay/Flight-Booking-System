@@ -2,7 +2,7 @@
 include('db_connect.php');
 try {
     $conn->query("SELECT public.refresh_airline_booking_summary()");
-
+//airline_booking_summary aggregates booking counts by airline
     $booking_summary = $conn->query("SELECT airlines, total_bookings FROM airline_booking_summary_materialized ORDER BY total_bookings DESC");
 } catch (PDOException $e) {
     error_log("Booking summary refresh error: " . $e->getMessage());

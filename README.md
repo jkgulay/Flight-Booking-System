@@ -32,6 +32,8 @@ A web-based Flight Booking System developed using **Laravel**, **PHP**, and **Po
 git clone https://github.com/yourusername/flight-booking-system.git
 cd flight-booking-system
 
+---
+
 ### 2. Set Up .env
 cp .env.example .env
 Update the following lines in .env for your PostgreSQL configuration:
@@ -42,14 +44,22 @@ DB_DATABASE=flight_booking_db
 DB_USERNAME=your_pgsql_user
 DB_PASSWORD=your_pgsql_password
 
+---
+
 ### 3. Install Dependencies
 composer install
+
+---
 
 ### 4. Generate Application Key
 php artisan key:generate
 
+---
+
 ### 5. Run Migrations
 php artisan migrate
+
+---
 
 ### 6. Serve the Application
 If you're using Laragon:
@@ -59,23 +69,7 @@ Or use:
 php artisan serve
 Then access via http://127.0.0.1:8000
 
-📂 Folder Structure
-pgsql
-Copy
-Edit
-├── app/
-├── bootstrap/
-├── config/
-├── database/
-│   └── migrations/
-├── public/
-├── resources/
-│   └── views/
-├── routes/
-│   └── web.php
-├── .env
-├── composer.json
-└── artisan
+---
 
 🐘 PostgreSQL with PgAdmin (Optional)
 If you prefer a GUI for managing your PostgreSQL data:
@@ -84,6 +78,8 @@ Open PgAdmin 4
 Connect to your PostgreSQL server
 Create a new database named flight_booking_db
 Run migrations or import an SQL dump if available
+
+---
 
 📝 License
 This project is open-source and available under the MIT License.
